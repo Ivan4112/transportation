@@ -15,6 +15,7 @@ import java.time.Instant;
 @Table(name = "orders", schema = "transportation")
 public class Order {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -41,5 +42,4 @@ public class Order {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
-
 }

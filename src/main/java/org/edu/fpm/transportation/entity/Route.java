@@ -14,6 +14,7 @@ import java.time.Instant;
 @Table(name = "route", schema = "transportation")
 public class Route {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -30,5 +31,4 @@ public class Route {
 
     @Column(name = "estimated_time")
     private Instant estimatedTime;
-
 }

@@ -14,6 +14,7 @@ import java.math.BigDecimal;
 @Table(name = "vehicle", schema = "transportation")
 public class Vehicle {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
     private Integer id;
 
@@ -31,5 +32,4 @@ public class Vehicle {
 
     @Column(name = "capacity", nullable = false, precision = 10, scale = 2)
     private BigDecimal capacity;
-
 }
