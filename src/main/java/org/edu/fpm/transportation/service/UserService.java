@@ -1,6 +1,7 @@
 package org.edu.fpm.transportation.service;
 
-import org.edu.fpm.transportation.dto.UserRegistrationDto;
+import org.edu.fpm.transportation.dto.auth.AuthResponseDto;
+import org.edu.fpm.transportation.dto.auth.signup.SignUpRequestDto;
 import org.edu.fpm.transportation.entity.Role;
 import org.edu.fpm.transportation.entity.User;
 import org.edu.fpm.transportation.repository.RoleRepository;
@@ -41,27 +42,27 @@ public class UserService {
     }
 
     @Transactional
-    public User registerUser(UserRegistrationDto registrationDto) {
+    public User registerUser(SignUpRequestDto signUpRequestDto) {
         // Check if user already exists
-        if (userRepository.findByEmail(registrationDto.getEmail()).isPresent()) {
+        if (userRepository.findByEmail(signUpRequestDto.getEmail()).isPresent()) {
             throw new IllegalArgumentException("User with this email already exists");
         }
         
         // Determine role based on email
         String roleName = "CUSTOMER"; // Default role
-        Optional<Role> role = roleRepository.findByEmail(registrationDto.getEmail());
+        Optional<Role> role = roleRepository.findByEmail(signUpRequestDto.getEmail());
         if (role.isPresent()) {
             roleName = role.get().getRoleName();
         }
         
         // Create new user
         User user = new User();
-        user.setEmail(registrationDto.getEmail());
-        user.setPasswordHash(registrationDto.getPassword()); // In a real app, this should be hashed
-        user.setFirstname(registrationDto.getFirstname());
-        user.setLastname(registrationDto.getLastname());
+        user.setEmail(signUpRequestDto.getEmail());
+        user.setPasswordHash(signUpRequestDto.getPassword());
+        user.setFirstName(signUpRequestDto.getFirstName());
+        user.setLastName(signUpRequestDto.getLastName());
         user.setRoleName(roleName);
-        
+
         return userRepository.save(user);
     }
 
@@ -70,8 +71,8 @@ public class UserService {
         
         // Update fields
         existingUser.setEmail(updatedUser.getEmail());
-        existingUser.setFirstname(updatedUser.getFirstname());
-        existingUser.setLastname(updatedUser.getLastname());
+        existingUser.setFirstName(updatedUser.getFirstName());
+        existingUser.setLastName(updatedUser.getLastName());
         
         if (updatedUser.getPasswordHash() != null) {
             existingUser.setPasswordHash(updatedUser.getPasswordHash());
