@@ -1,5 +1,6 @@
 package org.edu.fpm.transportation.controller;
 
+import org.edu.fpm.transportation.dto.UserRegistrationDto;
 import org.edu.fpm.transportation.entity.User;
 import org.edu.fpm.transportation.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -33,15 +34,15 @@ public class UserController {
         }
     }
 
-    @GetMapping("/role/{roleId}")
-    public List<User> getUsersByRole(@PathVariable Integer roleId) {
-        return userService.getUsersByRole(roleId);
+    @GetMapping("/role/{roleName}")
+    public List<User> getUsersByRole(@PathVariable String roleName) {
+        return userService.getUsersByRoleName(roleName);
     }
 
-    @PostMapping
+    @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public User createUser(@RequestBody User user) {
-        return userService.createUser(user);
+    public User registerUser(@RequestBody UserRegistrationDto registrationDto) {
+        return userService.registerUser(registrationDto);
     }
 
     @PutMapping("/{id}")
@@ -50,9 +51,9 @@ public class UserController {
     }
 
     @PatchMapping("/{id}/role")
-    public User changeUserRole(@PathVariable Integer id, @RequestBody Map<String, Integer> payload) {
-        Integer roleId = payload.get("roleId");
-        return userService.changeUserRole(id, roleId);
+    public User changeUserRole(@PathVariable Integer id, @RequestBody Map<String, String> payload) {
+        String roleName = payload.get("roleName");
+        return userService.changeUserRole(id, roleName);
     }
 
     @DeleteMapping("/{id}")
