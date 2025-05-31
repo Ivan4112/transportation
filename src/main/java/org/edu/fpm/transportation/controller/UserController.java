@@ -1,6 +1,5 @@
 package org.edu.fpm.transportation.controller;
 
-import org.edu.fpm.transportation.dto.UserRegistrationDto;
 import org.edu.fpm.transportation.entity.User;
 import org.edu.fpm.transportation.service.UserService;
 import org.springframework.http.HttpStatus;
@@ -13,36 +12,11 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
+
     private final UserService userService;
 
     public UserController(UserService userService) {
         this.userService = userService;
-    }
-
-    @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
-        try {
-            User user = userService.getUserById(id);
-            return ResponseEntity.ok(user);
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping("/role/{roleName}")
-    public List<User> getUsersByRole(@PathVariable String roleName) {
-        return userService.getUsersByRoleName(roleName);
-    }
-
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public User registerUser(@RequestBody UserRegistrationDto registrationDto) {
-        return userService.registerUser(registrationDto);
     }
 
     @PutMapping("/{id}")
@@ -60,5 +34,26 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteUser(@PathVariable Integer id) {
         userService.deleteUser(id);
+    }
+
+
+    @GetMapping("/role/{roleName}")
+    public List<User> getUsersByRole(@PathVariable String roleName) {
+        return userService.getUsersByRoleName(roleName);
+    }
+
+    @GetMapping
+    public List<User> getAllUsers() {
+        return userService.getAllUsers();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Integer id) {
+        try {
+            User user = userService.getUserById(id);
+            return ResponseEntity.ok(user);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }
