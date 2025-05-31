@@ -1,0 +1,16 @@
+-- -- Insert sample users
+-- INSERT INTO transportation.user (email, password_hash, firstname, lastname, role_name)
+-- VALUES ('customer@example.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'John', 'Doe', 'CUSTOMER')
+-- ON DUPLICATE KEY UPDATE email = 'customer@example.com';
+--
+-- INSERT INTO transportation.user (email, password_hash, firstname, lastname, role_name)
+-- VALUES ('driver@transport.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'Mike', 'Driver', 'DRIVER')
+-- ON DUPLICATE KEY UPDATE email = 'driver@transport.com';
+--
+-- INSERT INTO transportation.user (email, password_hash, firstname, lastname, role_name)
+-- VALUES ('manager@transport.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'Sarah', 'Manager', 'MANAGER')
+-- ON DUPLICATE KEY UPDATE email = 'manager@transport.com';
+--
+-- INSERT INTO transportation.user (email, password_hash, firstname, lastname, role_name)
+-- VALUES ('admin@transport.com', '$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG', 'Admin', 'Super', 'SUPER_ADMIN')
+-- ON DUPLICATE KEY UPDATE email = 'admin@transport.com';

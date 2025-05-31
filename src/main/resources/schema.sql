@@ -1,18 +1,30 @@
 CREATE SCHEMA IF NOT EXISTS transportation;
 
--- Role table
+-- Drop existing tables if they exist to avoid conflicts
+DROP TABLE IF EXISTS transportation.order_location;
+DROP TABLE IF EXISTS transportation.cargo;
+DROP TABLE IF EXISTS transportation.route;
+DROP TABLE IF EXISTS transportation.orders;
+DROP TABLE IF EXISTS transportation.vehicle;
+DROP TABLE IF EXISTS transportation.user;
+DROP TABLE IF EXISTS transportation.order_status;
+DROP TABLE IF EXISTS transportation.role;
+
+-- Role table with email field and renamed name field to role_name
 CREATE TABLE IF NOT EXISTS transportation.role (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(50) NOT NULL
+    role_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE
 );
 
--- User table
+-- User table with modified fields
 CREATE TABLE IF NOT EXISTS transportation.user (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
-    role_id INT NOT NULL,
-    FOREIGN KEY (role_id) REFERENCES transportation.role(id)
+    firstname VARCHAR(100),
+    lastname VARCHAR(100),
+    role_name VARCHAR(50) NOT NULL
 );
 
 -- Vehicle table
@@ -75,15 +87,14 @@ CREATE TABLE IF NOT EXISTS transportation.order_location (
 );
 
 -- Insert default roles
-INSERT INTO transportation.role (id, name) VALUES (1, 'CUSTOMER') ON DUPLICATE KEY UPDATE name = 'CUSTOMER';
-INSERT INTO transportation.role (id, name) VALUES (2, 'DRIVER') ON DUPLICATE KEY UPDATE name = 'DRIVER';
-INSERT INTO transportation.role (id, name) VALUES (3, 'MANAGER') ON DUPLICATE KEY UPDATE name = 'MANAGER';
-INSERT INTO transportation.role (id, name) VALUES (4, 'SUPER_ADMIN') ON DUPLICATE KEY UPDATE name = 'SUPER_ADMIN';
+-- INSERT INTO transportation.role (role_name, email) VALUES ('DRIVER', 'driver@transport.com');
+-- INSERT INTO transportation.role (role_name, email) VALUES ('MANAGER', 'manager@transport.com');
+-- INSERT INTO transportation.role (role_name, email) VALUES ('SUPER_ADMIN', 'admin@transport.com');
 
 -- Insert default order statuses
-INSERT INTO transportation.order_status (id, status_name) VALUES (1, 'PENDING') ON DUPLICATE KEY UPDATE status_name = 'PENDING';
-INSERT INTO transportation.order_status (id, status_name) VALUES (2, 'ASSIGNED') ON DUPLICATE KEY UPDATE status_name = 'ASSIGNED';
-INSERT INTO transportation.order_status (id, status_name) VALUES (3, 'IN_TRANSIT') ON DUPLICATE KEY UPDATE status_name = 'IN_TRANSIT';
-INSERT INTO transportation.order_status (id, status_name) VALUES (4, 'WAITING_UNLOADING') ON DUPLICATE KEY UPDATE status_name = 'WAITING_UNLOADING';
-INSERT INTO transportation.order_status (id, status_name) VALUES (5, 'DELIVERED') ON DUPLICATE KEY UPDATE status_name = 'DELIVERED';
-INSERT INTO transportation.order_status (id, status_name) VALUES (6, 'CANCELLED') ON DUPLICATE KEY UPDATE status_name = 'CANCELLED';
+-- INSERT INTO transportation.order_status (status_name) VALUES ('PENDING');
+-- INSERT INTO transportation.order_status (status_name) VALUES ('ASSIGNED');
+-- INSERT INTO transportation.order_status (status_name) VALUES ('IN_TRANSIT');
+-- INSERT INTO transportation.order_status (status_name) VALUES ('WAITING_UNLOADING');
+-- INSERT INTO transportation.order_status (status_name) VALUES ('DELIVERED');
+-- INSERT INTO transportation.order_status (status_name) VALUES ('CANCELLED');
