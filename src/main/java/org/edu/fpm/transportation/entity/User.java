@@ -21,10 +21,10 @@ public class User {
     private String passwordHash;
     
     @Column(name = "firstname", length = 100)
-    private String firstname;
+    private String firstName;
     
     @Column(name = "lastname", length = 100)
-    private String lastname;
+    private String lastName;
     
     @Column(name = "role_name", nullable = false, length = 50)
     private String roleName;
