@@ -44,13 +44,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     log.info("Configuring authorization rules");
                     auth
-                            .requestMatchers("/api/v2/users/**").permitAll()
-                            .requestMatchers("/api/v2/home/**").permitAll()
-                            .requestMatchers("/api/check/hello").permitAll()
-                            .requestMatchers("/api/check/credentials").permitAll()
-                            .requestMatchers("/api/check/assumed-role-credentials").permitAll()
+                            .requestMatchers("/api/auth/**").permitAll()
+//                            .requestMatchers("/api/v2/home/**").permitAll()
+//                            .requestMatchers("/api/check/hello").permitAll()
+//                            .requestMatchers("/api/check/credentials").permitAll()
+//                            .requestMatchers("/api/check/assumed-role-credentials").permitAll()
                             .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/webjars/**").permitAll()
-                            .requestMatchers("/api/v2/**").permitAll()
                             .anyRequest().authenticated();
                 })
                 .sessionManagement(session -> session
