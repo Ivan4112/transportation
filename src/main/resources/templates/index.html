@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,7 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container">
         <div style="text-align: center; padding: 50px 0;">
@@ -17,7 +17,7 @@
         
         <div style="display: flex; flex-wrap: wrap; margin: -15px;">
             <!-- For non-authenticated users -->
-            <div sec:authorize="!isAuthenticated()" style="flex: 1; min-width: 300px; padding: 15px;">
+            <div data-auth-hidden style="flex: 1; min-width: 300px; padding: 15px;">
                 <div class="card">
                     <div class="card-header">
                         <h2>Get Started</h2>
@@ -33,7 +33,7 @@
             </div>
             
             <!-- For customers -->
-            <div sec:authorize="hasRole('CUSTOMER')" style="flex: 1; min-width: 300px; padding: 15px;">
+            <div data-auth-required data-role="CUSTOMER" style="flex: 1; min-width: 300px; padding: 15px;">
                 <div class="card">
                     <div class="card-header">
                         <h2>Customer Dashboard</h2>
@@ -49,7 +49,7 @@
             </div>
             
             <!-- For drivers -->
-            <div sec:authorize="hasRole('DRIVER')" style="flex: 1; min-width: 300px; padding: 15px;">
+            <div data-auth-required data-role="DRIVER" style="flex: 1; min-width: 300px; padding: 15px;">
                 <div class="card">
                     <div class="card-header">
                         <h2>Driver Dashboard</h2>
@@ -64,7 +64,7 @@
             </div>
             
             <!-- For support agents -->
-            <div sec:authorize="hasRole('SUPPORT_AGENT')" style="flex: 1; min-width: 300px; padding: 15px;">
+            <div data-auth-required data-role="SUPPORT_AGENT" style="flex: 1; min-width: 300px; padding: 15px;">
                 <div class="card">
                     <div class="card-header">
                         <h2>Support Dashboard</h2>
@@ -79,7 +79,7 @@
             </div>
             
             <!-- For admins -->
-            <div sec:authorize="hasRole('ADMIN')" style="flex: 1; min-width: 300px; padding: 15px;">
+            <div data-auth-required data-role="ADMIN" style="flex: 1; min-width: 300px; padding: 15px;">
                 <div class="card">
                     <div class="card-header">
                         <h2>Admin Dashboard</h2>
@@ -135,6 +135,26 @@
         </div>
     </div>
     
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Update UI based on user role
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated
+            if (isAuthenticated()) {
+                const userRole = localStorage.getItem('user_role');
+                
+                // Show/hide elements based on role
+                document.querySelectorAll('[data-role]').forEach(el => {
+                    if (el.getAttribute('data-role') === userRole) {
+                        el.style.display = 'block';
+                    } else {
+                        el.style.display = 'none';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

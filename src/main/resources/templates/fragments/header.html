@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,32 +9,55 @@
         <div class="container header-container">
             <div class="logo">Transportation System</div>
             <ul class="nav-menu">
-                <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">Login</a></li>
-                <li sec:authorize="!isAuthenticated()"><a th:href="@{/register}">Register</a></li>
+                <!-- Non-authenticated links -->
+                <li data-auth-hidden><a th:href="@{/login}">Login</a></li>
+                <li data-auth-hidden><a th:href="@{/register}">Register</a></li>
                 
                 <!-- Customer Navigation -->
-                <li sec:authorize="hasRole('CUSTOMER')"><a th:href="@{/customer/orders/create}">Create Order</a></li>
-                <li sec:authorize="hasRole('CUSTOMER')"><a th:href="@{/customer/orders}">My Orders</a></li>
+                <li data-auth-required data-role="CUSTOMER"><a th:href="@{/customer/orders/create}">Create Order</a></li>
+                <li data-auth-required data-role="CUSTOMER"><a th:href="@{/customer/orders}">My Orders</a></li>
                 
                 <!-- Notification Icon with Badge -->
-                <li sec:authorize="isAuthenticated()" class="notification-badge">
+                <li data-auth-required class="notification-badge">
                     <a th:href="@{/notifications}">
                         Notifications
-                        <span class="notification-count" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}"></span>
+                        <span id="notificationCount" class="notification-count" style="display: none;">0</span>
                     </a>
                 </li>
                 
-                <!-- User Profile and Logout -->
-                <li sec:authorize="isAuthenticated()">
-                    <a th:href="@{/profile}" th:text="${#authentication.name}"></a>
+                <!-- User Profile -->
+                <li data-auth-required>
+                    <a href="#" id="userName">User</a>
                 </li>
-                <li sec:authorize="isAuthenticated()">
-                    <form th:action="@{/logout}" method="post" style="display: inline;">
-                        <button type="submit" style="background: none; border: none; color: white; cursor: pointer;">Logout</button>
-                    </form>
+                
+                <!-- Logout Button -->
+                <li data-auth-required>
+                    <button id="logoutButton" style="background: none; border: none; color: white; cursor: pointer;">Logout</button>
                 </li>
             </ul>
         </div>
     </header>
+    
+    <script>
+        // Update auth UI when the page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if auth.js is loaded
+            if (typeof updateAuthUI === 'function') {
+                updateAuthUI();
+            } else {
+                // If auth.js is not loaded yet, wait for it
+                window.addEventListener('load', function() {
+                    if (typeof updateAuthUI === 'function') {
+                        updateAuthUI();
+                    }
+                });
+            }
+            
+            // Update notification count if the function exists
+            if (typeof updateUnreadCount === 'function') {
+                updateUnreadCount();
+            }
+        });
+    </script>
 </body>
 </html>

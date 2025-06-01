@@ -7,86 +7,30 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container">
         <div class="card">
             <div class="card-header">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                     <h2 style="margin: 0;">Notifications</h2>
-                    <button id="markAllRead" class="btn btn-secondary" onclick="markAllAsRead()">Mark All as Read</button>
+                    <button id="markAllReadButton" class="btn btn-secondary">Mark All as Read</button>
                 </div>
             </div>
             <div class="card-body">
-                <div th:if="${notifications.empty}" class="alert alert-info">
-                    You don't have any notifications.
-                </div>
-                
-                <div th:unless="${notifications.empty}" class="notification-list">
-                    <div th:each="notification : ${notifications}" th:class="'notification-item' + (${notification.isRead} ? '' : ' unread')">
-                        <div style="display: flex; justify-content: space-between;">
-                            <div>
-                                <p th:text="${notification.message}"></p>
-                                <p class="time" th:text="${#temporals.format(notification.createdAt, 'dd-MM-yyyy HH:mm')}"></p>
-                            </div>
-                            <div>
-                                <a th:href="@{/customer/orders/{id}(id=${notification.orderId})}" class="btn btn-info btn-sm">View Order</a>
-                                <button th:if="${!notification.isRead}" class="btn btn-secondary btn-sm" th:onclick="'markAsRead(' + ${notification.id} + ')'">Mark as Read</button>
-                            </div>
-                        </div>
+                <div id="notificationsContainer">
+                    <!-- Notifications will be loaded here via JavaScript -->
+                    <div class="text-center">
+                        <p>Loading notifications...</p>
                     </div>
                 </div>
             </div>
         </div>
     </div>
     
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
     
-    <script>
-        function markAsRead(notificationId) {
-            fetch('/api/notifications/' + notificationId + '/read', {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to mark notification as read');
-                }
-                // Refresh the page to show updated status
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to mark notification as read. Please try again.');
-            });
-        }
-        
-        function markAllAsRead() {
-            fetch('/api/notifications/read-all', {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to mark all notifications as read');
-                }
-                // Refresh the page to show updated status
-                window.location.reload();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to mark all notifications as read. Please try again.');
-            });
-        }
-        
-        function getToken() {
-            // In a real application, you would get the token from localStorage or a cookie
-            return localStorage.getItem('jwt_token') || '';
-        }
-    </script>
+    <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/notifications.js}"></script>
 </body>
 </html>

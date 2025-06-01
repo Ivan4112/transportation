@@ -7,147 +7,28 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container">
         <div class="card">
             <div class="card-header">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin: 0;">Order #<span th:text="${order.id}"></span></h2>
+                    <h2 style="margin: 0;">Order #<span th:text="${orderId}"></span></h2>
                     <a th:href="@{/customer/orders}" class="btn btn-secondary">Back to Orders</a>
                 </div>
             </div>
-            <div class="card-body">
-                <div class="row" style="display: flex; flex-wrap: wrap; margin: -10px;">
-                    <!-- Order Status -->
-                    <div style="flex: 1; min-width: 300px; padding: 10px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>Status</h3>
-                            </div>
-                            <div class="card-body">
-                                <div style="text-align: center; padding: 20px 0;">
-                                    <span th:class="'status-' + ${#strings.toLowerCase(order.status)}" style="font-size: 1.5rem; padding: 10px 20px;" th:text="${order.status}"></span>
-                                </div>
-                                <div style="margin-top: 15px;">
-                                    <p><strong>Created:</strong> <span th:text="${#temporals.format(order.createdAt, 'dd-MM-yyyy HH:mm')}"></span></p>
-                                    <p th:if="${order.estimatedDeliveryTime}">
-                                        <strong>Estimated Delivery:</strong> 
-                                        <span th:text="${#temporals.format(order.estimatedDeliveryTime, 'dd-MM-yyyy HH:mm')}"></span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Cargo Details -->
-                    <div style="flex: 1; min-width: 300px; padding: 10px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>Cargo Details</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Type:</strong> <span th:text="${order.cargoType}"></span></p>
-                                <p><strong>Weight:</strong> <span th:text="${order.cargoWeight} + ' kg'"></span></p>
-                                <p><strong>Price:</strong> <span th:text="${#numbers.formatDecimal(order.price, 0, 'COMMA', 2, 'POINT')} + ' UAH'"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Route Information -->
-                    <div style="flex: 1; min-width: 300px; padding: 10px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>Route Information</h3>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>From:</strong> <span th:text="${order.startLocation}"></span></p>
-                                <p><strong>To:</strong> <span th:text="${order.endLocation}"></span></p>
-                                <p><strong>Distance:</strong> <span th:text="${order.distance} + ' km'"></span></p>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Driver Information -->
-                    <div style="flex: 1; min-width: 300px; padding: 10px;">
-                        <div class="card">
-                            <div class="card-header">
-                                <h3>Driver Information</h3>
-                            </div>
-                            <div class="card-body">
-                                <div th:if="${order.driverName}">
-                                    <p><strong>Driver:</strong> <span th:text="${order.driverName}"></span></p>
-                                    <p th:if="${order.vehicleLicensePlate}">
-                                        <strong>Vehicle:</strong> <span th:text="${order.vehicleLicensePlate}"></span>
-                                    </p>
-                                </div>
-                                <div th:unless="${order.driverName}" style="text-align: center; padding: 20px 0;">
-                                    <p>No driver assigned yet</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Tracking Map -->
-                <div class="card mt-3" th:if="${order.status == 'IN_TRANSIT'}">
-                    <div class="card-header">
-                        <h3>Live Tracking</h3>
-                    </div>
-                    <div class="card-body">
-                        <div id="map" style="height: 400px; width: 100%;"></div>
-                    </div>
+            <div id="orderDetailsContainer" class="card-body">
+                <!-- Order details will be loaded here via JavaScript -->
+                <div class="text-center">
+                    <p>Loading order details...</p>
                 </div>
             </div>
         </div>
     </div>
     
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
     
-    <!-- Map Script (only loaded for orders in transit) -->
-    <script th:if="${order.status == 'IN_TRANSIT'}">
-        // Initialize map when the page loads
-        window.onload = function() {
-            initMap();
-            // Poll for location updates every 30 seconds
-            setInterval(updateLocation, 30000);
-        };
-        
-        function initMap() {
-            // In a real application, you would use a mapping library like Leaflet or Google Maps
-            console.log("Map initialized");
-            
-            // Fetch initial location
-            updateLocation();
-        }
-        
-        function updateLocation() {
-            // Fetch the latest location from the API
-            fetch('/api/tracking/orders/' + [[${order.id}]] + '/location', {
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to fetch location');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Update map with new location
-                console.log("Location updated:", data);
-                // In a real application, you would update the map marker position
-            })
-            .catch(error => {
-                console.error('Error fetching location:', error);
-            });
-        }
-        
-        function getToken() {
-            // In a real application, you would get the token from localStorage or a cookie
-            return localStorage.getItem('jwt_token') || '';
-        }
-    </script>
+    <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/customer.js}"></script>
 </body>
 </html>

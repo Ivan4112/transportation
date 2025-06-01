@@ -7,32 +7,32 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
 </head>
 <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <div class="container">
         <h1 class="form-title">Create New Transportation Order</h1>
         
         <div class="card">
             <div class="card-body">
-                <form id="orderForm" th:action="@{/customer/orders}" method="post" th:object="${orderRequest}">
+                <form id="orderForm">
                     <div class="form-group">
                         <label for="cargoType" class="form-label">Cargo Type</label>
                         <div class="cargo-types">
-                            <div class="cargo-type-option" data-value="GRAIN" onclick="selectCargoType(this)">Grain</div>
-                            <div class="cargo-type-option" data-value="WHEAT" onclick="selectCargoType(this)">Wheat</div>
-                            <div class="cargo-type-option" data-value="CORN" onclick="selectCargoType(this)">Corn</div>
-                            <div class="cargo-type-option" data-value="BARLEY" onclick="selectCargoType(this)">Barley</div>
-                            <div class="cargo-type-option" data-value="SAND" onclick="selectCargoType(this)">Sand</div>
-                            <div class="cargo-type-option" data-value="GRAVEL" onclick="selectCargoType(this)">Gravel</div>
-                            <div class="cargo-type-option" data-value="METAL" onclick="selectCargoType(this)">Metal</div>
-                            <div class="cargo-type-option" data-value="HAZARDOUS" onclick="selectCargoType(this)">Hazardous</div>
+                            <div class="cargo-type-option" data-value="GRAIN">Grain</div>
+                            <div class="cargo-type-option" data-value="WHEAT">Wheat</div>
+                            <div class="cargo-type-option" data-value="CORN">Corn</div>
+                            <div class="cargo-type-option" data-value="BARLEY">Barley</div>
+                            <div class="cargo-type-option" data-value="SAND">Sand</div>
+                            <div class="cargo-type-option" data-value="GRAVEL">Gravel</div>
+                            <div class="cargo-type-option" data-value="METAL">Metal</div>
+                            <div class="cargo-type-option" data-value="HAZARDOUS">Hazardous</div>
                         </div>
-                        <input type="hidden" id="cargoType" name="cargoType" th:field="*{cargoType}" required>
+                        <input type="hidden" id="cargoType" name="cargoType" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="cargoWeight" class="form-label">Cargo Weight (kg)</label>
-                        <input type="number" id="cargoWeight" name="cargoWeight" class="form-control" th:field="*{cargoWeight}" min="1000" step="100" required>
+                        <input type="number" id="cargoWeight" name="cargoWeight" class="form-control" min="1000" step="100" required>
                         <small class="form-text text-muted">
                             Optimal weight range is 15,000 - 20,000 kg. Lower weights may incur higher per-ton costs.
                         </small>
@@ -40,16 +40,16 @@
                     
                     <div class="form-group">
                         <label for="startLocation" class="form-label">Start Location</label>
-                        <input type="text" id="startLocation" name="startLocation" class="form-control" th:field="*{startLocation}" required>
+                        <input type="text" id="startLocation" name="startLocation" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
                         <label for="endLocation" class="form-label">End Location</label>
-                        <input type="text" id="endLocation" name="endLocation" class="form-control" th:field="*{endLocation}" required>
+                        <input type="text" id="endLocation" name="endLocation" class="form-control" required>
                     </div>
                     
                     <div class="form-group">
-                        <button type="button" class="btn btn-secondary" onclick="calculatePrice()">Calculate Price</button>
+                        <button type="button" id="calculatePriceButton" class="btn btn-secondary">Calculate Price</button>
                     </div>
                     
                     <div id="pricePreview" class="price-preview" style="display: none;">
@@ -84,86 +84,9 @@
         </div>
     </div>
     
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
     
-    <script>
-        function selectCargoType(element) {
-            // Remove selected class from all options
-            document.querySelectorAll('.cargo-type-option').forEach(option => {
-                option.classList.remove('selected');
-            });
-            
-            // Add selected class to clicked option
-            element.classList.add('selected');
-            
-            // Set the hidden input value
-            document.getElementById('cargoType').value = element.getAttribute('data-value');
-        }
-        
-        function calculatePrice() {
-            const cargoType = document.getElementById('cargoType').value;
-            const cargoWeight = document.getElementById('cargoWeight').value;
-            const startLocation = document.getElementById('startLocation').value;
-            const endLocation = document.getElementById('endLocation').value;
-            
-            // Validate form
-            if (!cargoType || !cargoWeight || !startLocation || !endLocation) {
-                alert('Please fill in all fields');
-                return;
-            }
-            
-            // Create request body
-            const requestBody = {
-                cargoType: cargoType,
-                cargoWeight: parseFloat(cargoWeight),
-                startLocation: startLocation,
-                endLocation: endLocation
-            };
-            
-            // Send API request
-            fetch('/api/customer/orders/calculate-price', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': 'Bearer ' + getToken()
-                },
-                body: JSON.stringify(requestBody)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to calculate price');
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Update price preview
-                document.getElementById('previewCargoType').textContent = data.cargoType;
-                document.getElementById('previewWeight').textContent = data.cargoWeight.toLocaleString() + ' kg';
-                document.getElementById('previewDistance').textContent = data.distance + ' km';
-                document.getElementById('previewRoute').textContent = data.startLocation + ' → ' + data.endLocation;
-                document.getElementById('previewPrice').textContent = data.price.toLocaleString() + ' UAH';
-                
-                // Show price preview
-                document.getElementById('pricePreview').style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Failed to calculate price. Please try again.');
-            });
-        }
-        
-        function getToken() {
-            // In a real application, you would get the token from localStorage or a cookie
-            return localStorage.getItem('jwt_token') || '';
-        }
-        
-        // Initialize with default cargo type
-        window.onload = function() {
-            const defaultCargoType = document.querySelector('.cargo-type-option[data-value="GRAIN"]');
-            if (defaultCargoType) {
-                selectCargoType(defaultCargoType);
-            }
-        };
-    </script>
+    <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/customer.js}"></script>
 </body>
 </html>
