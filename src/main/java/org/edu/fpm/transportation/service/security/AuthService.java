@@ -13,8 +13,6 @@ import org.edu.fpm.transportation.validation.UserValidation;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Map;
-
 import static org.edu.fpm.transportation.util.ResourceConstants.MESSAGE_CREDENTIALS_INVALID;
 
 
@@ -78,51 +76,5 @@ public class AuthService {
         User deletedUser = userService.deleteUserByEmail(userEmail);
         return deletedUser != null;
     }*/
-
-    public String extractTokenFromHeaders(Map<String, String> headers) {
-        if (headers == null) {
-            log.info("Headers are null");
-            return null;
-        }
-
-        String authorizationHeader = headers.get("Authorization");
-        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
-            log.info("Authorization header is missing or invalid");
-            return null;
-        }
-
-        String token = authorizationHeader.substring(7);
-        log.info("Token extracted successfully");
-        return token;
-    }
-
-    public boolean isAuthorized(String token) {
-        if (token == null || token.trim().isEmpty()) {
-            log.info("Token is null or empty");
-            return false;
-        }
-
-        try {
-            String email = jwtService.extractUsername(token);
-            User user = userRepository.findByEmail(email).orElse(null);
-            return user != null && jwtService.isTokenValid(token, user);
-        } catch (Exception e) {
-            log.error("Error validating token", e);
-            return false;
-        }
-    }
-
-    public String getUserIdFromToken(String token) {
-        if (token == null || token.trim().isEmpty()) {
-            return null;
-        }
-
-        try {
-            return jwtService.getUserIdFromToken(token);
-        } catch (Exception e) {
-            log.error("Error getting userId from token", e);
-            return null;
-        }
-    }
 
 }

@@ -7,6 +7,7 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.edu.fpm.transportation.entity.User;
+import org.edu.fpm.transportation.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,12 @@ public class JwtService {
     private long jwtExpiration;
     @Value("${application.security.jwt.secret-key}")
     private String secretKey;
+
+    private final UserRepository userRepository;
+
+    public JwtService(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -89,5 +96,38 @@ public class JwtService {
 
     public String getUserIdFromToken(String token) {
         return extractClaim(token, claims -> claims.get("userId", String.class));
+    }
+
+    public String extractTokenFromHeaders(Map<String, String> headers) {
+        if (headers == null) {
+            log.info("Headers are null");
+            return null;
+        }
+
+        String authorizationHeader = headers.get("Authorization");
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            log.info("Authorization header is missing or invalid");
+            return null;
+        }
+
+        String token = authorizationHeader.substring(7);
+        log.info("Token extracted successfully");
+        return token;
+    }
+
+    public boolean isAuthorized(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            log.info("Token is null or empty");
+            return false;
+        }
+
+        try {
+            String email = extractUsername(token);
+            User user = userRepository.findByEmail(email).orElse(null);
+            return user != null && isTokenValid(token, user);
+        } catch (Exception e) {
+            log.error("Error validating token", e);
+            return false;
+        }
     }
 }
