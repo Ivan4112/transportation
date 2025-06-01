@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body>
+    <header th:fragment="header" class="header">
+        <div class="container header-container">
+            <div class="logo">Transportation System</div>
+            <ul class="nav-menu">
+                <li sec:authorize="!isAuthenticated()"><a th:href="@{/login}">Login</a></li>
+                <li sec:authorize="!isAuthenticated()"><a th:href="@{/register}">Register</a></li>
+                
+                <!-- Customer Navigation -->
+                <li sec:authorize="hasRole('CUSTOMER')"><a th:href="@{/customer/orders/create}">Create Order</a></li>
+                <li sec:authorize="hasRole('CUSTOMER')"><a th:href="@{/customer/orders}">My Orders</a></li>
+                
+                <!-- Notification Icon with Badge -->
+                <li sec:authorize="isAuthenticated()" class="notification-badge">
+                    <a th:href="@{/notifications}">
+                        Notifications
+                        <span class="notification-count" th:if="${unreadNotifications > 0}" th:text="${unreadNotifications}"></span>
+                    </a>
+                </li>
+                
+                <!-- User Profile and Logout -->
+                <li sec:authorize="isAuthenticated()">
+                    <a th:href="@{/profile}" th:text="${#authentication.name}"></a>
+                </li>
+                <li sec:authorize="isAuthenticated()">
+                    <form th:action="@{/logout}" method="post" style="display: inline;">
+                        <button type="submit" style="background: none; border: none; color: white; cursor: pointer;">Logout</button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </header>
+</body>
+</html>
