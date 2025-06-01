@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <h1>About Us</h1>
+        <div class="card">
+            <div class="card-body">
+                <h2>Our Story</h2>
+                <p>Transportation System was founded in 2020 with a mission to revolutionize the transportation industry. We specialize in efficient and reliable transportation services for all your cargo needs.</p>
+                
+                <h2>Our Mission</h2>
+                <p>To provide the most reliable, efficient, and cost-effective transportation solutions for businesses and individuals.</p>
+                
+                <h2>Our Team</h2>
+                <p>Our team consists of experienced professionals dedicated to ensuring your cargo reaches its destination safely and on time.</p>
+            </div>
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <script th:src="@{/js/auth.js}"></script>
+</body>
+</html>

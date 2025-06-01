@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Services - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div th:replace="~{fragments/header :: header}"></div>
+    
+    <div class="container">
+        <h1>Our Services</h1>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h2>Grain Transportation</h2>
+            </div>
+            <div class="card-body">
+                <p>Specialized transportation for wheat, corn, barley, and other grain products. Our vehicles are equipped to handle bulk grain transportation efficiently and safely.</p>
+                <p>Optimal weight range: 15-20 tons</p>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h2>Construction Materials</h2>
+            </div>
+            <div class="card-body">
+                <p>Reliable transportation for sand, gravel, and building materials. We ensure timely delivery to construction sites and warehouses.</p>
+                <p>Optimal weight range: 15-20 tons</p>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h2>Metal Transportation</h2>
+            </div>
+            <div class="card-body">
+                <p>Safe and secure transportation for metal products and raw materials. Our vehicles are designed to handle heavy metal loads with care.</p>
+                <p>Optimal weight range: 15-20 tons</p>
+            </div>
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-header">
+                <h2>Hazardous Materials</h2>
+            </div>
+            <div class="card-body">
+                <p>Specialized transportation for hazardous materials with strict adherence to safety regulations and protocols.</p>
+                <p>Optimal weight range: 15-20 tons</p>
+            </div>
+        </div>
+    </div>
+    
+    <div th:replace="~{fragments/footer :: footer}"></div>
+    
+    <script th:src="@{/js/auth.js}"></script>
+</body>
+</html>

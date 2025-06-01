@@ -44,11 +44,60 @@
                     <p>Don't have an account? <a th:href="@{/register}">Register here</a></p>
                 </div>
             </form>
+            
+            <!-- Success message with manual redirect link -->
+            <div id="loginSuccessMessage" class="alert alert-success" style="display: none;">
+                Login successful! Redirecting...
+                <div id="manualRedirect" style="display: none;">
+                    If you are not redirected automatically, 
+                    <a href="#" id="redirectLink">click here</a>.
+                </div>
+            </div>
         </div>
     </div>
     
     <div th:replace="~{fragments/footer :: footer}"></div>
     
     <script th:src="@{/js/auth.js}"></script>
+    <script>
+        // Show manual redirect link after 3 seconds if redirection doesn't happen automatically
+        document.addEventListener('DOMContentLoaded', function() {
+            const loginForm = document.getElementById('loginForm');
+            if (loginForm) {
+                loginForm.addEventListener('submit', function(event) {
+                    // The handleLogin function from auth.js will be called
+                    
+                    // Set a timeout to show manual redirect link if redirection doesn't happen
+                    setTimeout(function() {
+                        const manualRedirect = document.getElementById('manualRedirect');
+                        if (manualRedirect && isAuthenticated()) {
+                            manualRedirect.style.display = 'block';
+                            
+                            // Set redirect link based on role
+                            const redirectLink = document.getElementById('redirectLink');
+                            if (redirectLink) {
+                                const role = localStorage.getItem('user_role');
+                                if (role === 'CUSTOMER') {
+                                    redirectLink.href = '/customer/orders/create';
+                                } else if (role === 'DRIVER') {
+                                    redirectLink.href = '/driver/dashboard';
+                                } else if (role === 'ADMIN') {
+                                    redirectLink.href = '/admin/dashboard';
+                                } else {
+                                    redirectLink.href = '/';
+                                }
+                                
+                                // Add click handler for manual redirect
+                                redirectLink.addEventListener('click', function(e) {
+                                    e.preventDefault();
+                                    redirectBasedOnRole(localStorage.getItem('user_role'));
+                                });
+                            }
+                        }
+                    }, 3000);
+                });
+            }
+        });
+    </script>
 </body>
 </html>
