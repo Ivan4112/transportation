@@ -2,6 +2,7 @@ package org.edu.fpm.transportation.service.security;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.NonNull;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,7 +35,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     @NonNull FilterChain filterChain) throws ServletException, IOException {
         
         String path = request.getRequestURI();
-        log.debug("Processing request for path: {}", path);
+        log.info("Processing request for path: {}", path);
+        
+        // Log all headers for debugging
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            log.info("Header: {} = {}", headerName, request.getHeader(headerName));
+        }
+        
+        // Log all cookies for debugging
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                log.info("Cookie: {} = {}", cookie.getName(), cookie.getValue());
+            }
+        } else {
+            log.info("No cookies found in request");
+        }
         
         if (isPublicEndpoint(path)) {
             log.debug("Public endpoint detected, skipping JWT validation");
@@ -41,58 +60,92 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
-        final String authHeader = request.getHeader("Authorization");
-
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.debug("No valid Authorization header found");
-            filterChain.doFilter(request, response);
-            return;
+        // First check Authorization header
+        String jwt = null;
+        String authHeader = request.getHeader("Authorization");
+        
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            jwt = authHeader.substring(7);
+            log.debug("Found JWT token in Authorization header: {}", jwt);
         }
-
-        final String jwt = authHeader.substring(7);
-        final String userEmail;
-
-        try {
-            userEmail = jwtService.extractUsername(jwt);
-            log.debug("Extracted email from JWT: {}", userEmail);
-        } catch (Exception e) {
-            log.error("Error extracting username from JWT: {}", e.getMessage());
-            filterChain.doFilter(request, response);
-            return;
-        }
-
-        if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            Optional<User> userOptional = userRepository.findByEmail(userEmail);
-
-            if (userOptional.isPresent()) {
-                User user = userOptional.get();
-                log.debug("Found user: {}", user.getEmail());
-
-                if (jwtService.isTokenValid(jwt, user)) {
-                    List<SimpleGrantedAuthority> authorities = List.of(
-                            new SimpleGrantedAuthority("ROLE_" + user.getRoleName())
-                    );
-
-                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                            user.getEmail(),
-                            null,
-                            authorities
-                    );
-
-                    authToken.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
-                    SecurityContextHolder.getContext().setAuthentication(authToken);
-                    log.debug("Authentication set in SecurityContext for user: {}", user.getEmail());
-                } else {
-                    log.warn("Invalid JWT token for user: {}", user.getEmail());
-                }
-            } else {
-                log.warn("User not found for email: {}", userEmail);
+        
+        // If token not found in header, check URL parameter
+        if (jwt == null) {
+            String tokenParam = request.getParameter("token");
+            if (tokenParam != null && !tokenParam.isEmpty()) {
+                jwt = tokenParam;
+                log.debug("Found JWT token in URL parameter: {}", jwt);
+                
+                // Add token as cookie for future requests
+                Cookie tokenCookie = new Cookie("jwt_token", jwt);
+                tokenCookie.setPath("/");
+                tokenCookie.setMaxAge(86400);
+                response.addCookie(tokenCookie);
             }
         }
-
+        
+        // If token not found in header or URL, check cookies
+        if (jwt == null) {
+            Cookie[] requestCookies = request.getCookies();
+            if (requestCookies != null) {
+                for (Cookie cookie : requestCookies) {
+                    if ("jwt_token".equals(cookie.getName())) {
+                        jwt = cookie.getValue();
+                        log.debug("Found JWT token in cookie: {}", jwt);
+                        break;
+                    }
+                }
+            }
+        }
+        
+        if (jwt == null) {
+            log.debug("No JWT token found");
+            filterChain.doFilter(request, response);
+            return;
+        }
+        
+        // Process token
+        try {
+            String userEmail = jwtService.extractUsername(jwt);
+            log.debug("Extracted email from JWT: {}", userEmail);
+            
+            if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                Optional<User> userOptional = userRepository.findByEmail(userEmail);
+                
+                if (userOptional.isPresent()) {
+                    User user = userOptional.get();
+                    log.debug("Found user: {}, role: {}", user.getEmail(), user.getRoleName());
+                    
+                    if (jwtService.isTokenValid(jwt, user)) {
+                        List<SimpleGrantedAuthority> authorities = List.of(
+                                new SimpleGrantedAuthority("ROLE_" + user.getRoleName())
+                        );
+                        
+                        log.debug("Granted authorities: {}", authorities);
+                        
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                user.getEmail(),
+                                null,
+                                authorities
+                        );
+                        
+                        authToken.setDetails(
+                                new WebAuthenticationDetailsSource().buildDetails(request)
+                        );
+                        
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+                        log.debug("Authentication set in SecurityContext for user: {}", user.getEmail());
+                    } else {
+                        log.warn("Invalid JWT token for user: {}", user.getEmail());
+                    }
+                } else {
+                    log.warn("User not found for email: {}", userEmail);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error processing JWT token: {}", e.getMessage());
+        }
+        
         filterChain.doFilter(request, response);
     }
 
@@ -110,6 +163,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/js/") ||
                path.startsWith("/images/") ||
                path.startsWith("/webjars/") ||
-               path.startsWith("/error/");
+               path.startsWith("/error/") ||
+               path.equals("/about") ||
+               path.equals("/services") ||
+               path.equals("/contact");
     }
 }

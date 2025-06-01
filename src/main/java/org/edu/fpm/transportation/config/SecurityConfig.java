@@ -2,9 +2,9 @@ package org.edu.fpm.transportation.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.edu.fpm.transportation.service.security.JwtAuthenticationFilter;
+import org.edu.fpm.transportation.service.security.TokenParameterFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -19,7 +19,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -33,13 +32,15 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final TokenParameterFilter tokenParameterFilter;
     private final UserDetailsService userDetailsService;
 
     private static final String[] STATIC_RESOURCES = {
             "/css/**",
             "/js/**",
             "/images/**",
-            "/webjars/**"
+            "/webjars/**",
+            "favicon.ico"
     };
 
     private static final String[] PUBLIC_URLS = {
@@ -49,8 +50,11 @@ public class SecurityConfig {
             "/error/**"
     };
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, 
+                         TokenParameterFilter tokenParameterFilter,
+                         UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.tokenParameterFilter = tokenParameterFilter;
         this.userDetailsService = userDetailsService;
     }
 
@@ -73,12 +77,11 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider())
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(tokenParameterFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
-
-
 
     @Bean
     public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -104,7 +107,9 @@ public class SecurityConfig {
                 })
                 .formLogin(form -> form.disable()) // Disable form login as we're using JWT
                 .logout(logout -> logout.disable()) // Disable default logout as we're handling it via JavaScript
-                .csrf(csrf -> csrf.disable());
+                .csrf(csrf -> csrf.disable())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(tokenParameterFilter, JwtAuthenticationFilter.class);
 
         return http.build();
     }
@@ -116,6 +121,7 @@ public class SecurityConfig {
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true); // Allow credentials (cookies)
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
