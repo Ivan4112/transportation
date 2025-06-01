@@ -101,7 +101,7 @@ public class UserValidation {
      */
     private void validateEmailNotRegistered(String email) {
         validateEmailFormat(email);
-        Optional<User> existingUser = Optional.ofNullable(userService.getUserByEmail(email));
+        Optional<User> existingUser = userService.getUserByEmail(email);
         if (existingUser.isPresent()) {
             throw new InvalidCredentialsForAuthException(MESSAGE_EMAIL_ALREADY_IN_USE);
         }
