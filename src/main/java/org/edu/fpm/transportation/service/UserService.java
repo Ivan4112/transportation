@@ -6,6 +6,7 @@ import org.edu.fpm.transportation.entity.Role;
 import org.edu.fpm.transportation.entity.User;
 import org.edu.fpm.transportation.repository.RoleRepository;
 import org.edu.fpm.transportation.repository.UserRepository;
+import org.edu.fpm.transportation.util.RoleType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,10 +53,10 @@ public class UserService {
         }
         
         // Determine role based on email
-        String roleName = "CUSTOMER"; // Default role
+        RoleType roleType = RoleType.CUSTOMER; // Default role
         Optional<Role> role = roleRepository.findByEmail(signUpRequestDto.getEmail());
         if (role.isPresent()) {
-            roleName = role.get().getRoleName();
+            roleType = RoleType.fromString(role.get().getRoleName());
         }
         
         // Create new user
@@ -64,8 +65,8 @@ public class UserService {
         user.setPasswordHash(passwordEncoder.encode(signUpRequestDto.getPassword()));
         user.setFirstName(signUpRequestDto.getFirstName());
         user.setLastName(signUpRequestDto.getLastName());
-        user.setRoleName(roleName);
-        log.info("passwordEncoder: {}", passwordEncoder.encode("StrongPass!1"));
+        user.setRoleName(roleType.getRoleName());
+        
         return userRepository.save(user);
     }
 
@@ -78,16 +79,21 @@ public class UserService {
         existingUser.setLastName(updatedUser.getLastName());
         
         if (updatedUser.getPasswordHash() != null) {
-            existingUser.setPasswordHash(updatedUser.getPasswordHash());
+            existingUser.setPasswordHash(passwordEncoder.encode(updatedUser.getPasswordHash()));
         }
         
         return userRepository.save(existingUser);
     }
 
-    public User changeUserRole(Integer userId, String roleName) {
+    public User changeUserRole(Integer userId, RoleType roleType) {
         User user = getUserById(userId);
-        user.setRoleName(roleName);
+        user.setRoleName(roleType.getRoleName());
         return userRepository.save(user);
+    }
+    
+    public User changeUserRole(Integer userId, String roleName) {
+        RoleType roleType = RoleType.fromString(roleName);
+        return changeUserRole(userId, roleType);
     }
 
     public void deleteUser(Integer id) {
