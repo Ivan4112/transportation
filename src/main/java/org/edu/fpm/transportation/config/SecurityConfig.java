@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.edu.fpm.transportation.service.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -18,6 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -32,6 +34,20 @@ import java.util.List;
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final UserDetailsService userDetailsService;
+
+    private static final String[] STATIC_RESOURCES = {
+            "/css/**",
+            "/js/**",
+            "/images/**",
+            "/webjars/**"
+    };
+
+    private static final String[] PUBLIC_URLS = {
+            "/",
+            "/login",
+            "/register",
+            "/error/**"
+    };
 
     public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
@@ -58,6 +74,37 @@ public class SecurityConfig {
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+
+        return http.build();
+    }
+
+
+
+    @Bean
+    public SecurityFilterChain webSecurityFilterChain(HttpSecurity http) throws Exception {
+        log.info("Configuring web security filter chain");
+
+        http
+                .securityMatcher("/**") // Apply to all non-API endpoints
+                .authorizeHttpRequests(auth -> {
+                    log.info("Configuring web authorization rules");
+                    auth
+                            // Allow access to static resources
+                            .requestMatchers(STATIC_RESOURCES).permitAll()
+                            // Allow access to public pages
+                            .requestMatchers(PUBLIC_URLS).permitAll()
+                            // Allow access to Quick Links pages
+                            .requestMatchers("/about", "/services", "/contact").permitAll()
+                            // Require specific roles for certain pages
+                            .requestMatchers("/customer/**").hasRole("CUSTOMER")
+                            .requestMatchers("/driver/**").hasRole("DRIVER")
+                            .requestMatchers("/admin/**").hasRole("ADMIN")
+                            // Require authentication for all other requests
+                            .anyRequest().authenticated();
+                })
+                .formLogin(form -> form.disable()) // Disable form login as we're using JWT
+                .logout(logout -> logout.disable()) // Disable default logout as we're handling it via JavaScript
+                .csrf(csrf -> csrf.disable());
 
         return http.build();
     }
