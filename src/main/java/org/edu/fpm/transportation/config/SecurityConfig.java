@@ -40,7 +40,7 @@ public class SecurityConfig {
             "/js/**",
             "/images/**",
             "/webjars/**",
-            "favicon.ico"
+            "/favicon.png"
     };
 
     private static final String[] PUBLIC_URLS = {

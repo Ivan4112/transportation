@@ -166,6 +166,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                path.startsWith("/error/") ||
                path.equals("/about") ||
                path.equals("/services") ||
+               path.equals("/favicon.png") ||
                path.equals("/contact");
     }
 }
