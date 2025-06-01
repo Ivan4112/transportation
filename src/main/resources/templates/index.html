@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+    
+    <div class="container">
+        <div style="text-align: center; padding: 50px 0;">
+            <h1>Welcome to the Transportation System</h1>
+            <p>Efficient and reliable transportation services for all your cargo needs.</p>
+        </div>
+        
+        <div style="display: flex; flex-wrap: wrap; margin: -15px;">
+            <!-- For non-authenticated users -->
+            <div sec:authorize="!isAuthenticated()" style="flex: 1; min-width: 300px; padding: 15px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Get Started</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Create an account or login to access our transportation services.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <a th:href="@{/register}" class="btn btn-primary" style="flex: 1;">Register</a>
+                            <a th:href="@{/login}" class="btn btn-secondary" style="flex: 1;">Login</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- For customers -->
+            <div sec:authorize="hasRole('CUSTOMER')" style="flex: 1; min-width: 300px; padding: 15px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Customer Dashboard</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Manage your transportation orders and track shipments.</p>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <a th:href="@{/customer/orders/create}" class="btn btn-primary" style="flex: 1;">Create Order</a>
+                            <a th:href="@{/customer/orders}" class="btn btn-secondary" style="flex: 1;">My Orders</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- For drivers -->
+            <div sec:authorize="hasRole('DRIVER')" style="flex: 1; min-width: 300px; padding: 15px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Driver Dashboard</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Manage your assigned deliveries and update order status.</p>
+                        <div style="margin-top: 20px;">
+                            <a href="#" class="btn btn-primary btn-block">My Deliveries</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- For support agents -->
+            <div sec:authorize="hasRole('SUPPORT_AGENT')" style="flex: 1; min-width: 300px; padding: 15px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Support Dashboard</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Manage customer inquiries and assist with order issues.</p>
+                        <div style="margin-top: 20px;">
+                            <a href="#" class="btn btn-primary btn-block">Support Tickets</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- For admins -->
+            <div sec:authorize="hasRole('ADMIN')" style="flex: 1; min-width: 300px; padding: 15px;">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Admin Dashboard</h2>
+                    </div>
+                    <div class="card-body">
+                        <p>Manage users, orders, and system settings.</p>
+                        <div style="margin-top: 20px;">
+                            <a href="#" class="btn btn-primary btn-block">Admin Panel</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Services Section -->
+        <div style="margin-top: 50px;">
+            <h2 style="text-align: center; margin-bottom: 30px;">Our Services</h2>
+            
+            <div style="display: flex; flex-wrap: wrap; margin: -15px;">
+                <div style="flex: 1; min-width: 300px; padding: 15px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Grain Transportation</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>Specialized transportation for wheat, corn, barley, and other grain products.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 300px; padding: 15px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Construction Materials</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>Reliable transportation for sand, gravel, and building materials.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="flex: 1; min-width: 300px; padding: 15px;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3>Metal Transportation</h3>
+                        </div>
+                        <div class="card-body">
+                            <p>Safe and secure transportation for metal products and raw materials.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>
