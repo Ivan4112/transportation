@@ -1,15 +1,5 @@
 CREATE SCHEMA IF NOT EXISTS transportation;
 
--- Drop existing tables if they exist to avoid conflicts
-DROP TABLE IF EXISTS transportation.notification;
--- DROP TABLE IF EXISTS transportation.order_location;
--- DROP TABLE IF EXISTS transportation.cargo;
--- DROP TABLE IF EXISTS transportation.route;
--- DROP TABLE IF EXISTS transportation.orders;
--- DROP TABLE IF EXISTS transportation.vehicle;
--- DROP TABLE IF EXISTS transportation.user;
--- DROP TABLE IF EXISTS transportation.order_status;
--- DROP TABLE IF EXISTS transportation.role;
 
 -- Role table with email field and renamed name field to role_name
 CREATE TABLE IF NOT EXISTS transportation.role (
@@ -102,9 +92,9 @@ CREATE TABLE IF NOT EXISTS transportation.notification (
 );
 
 -- Insert default roles
--- INSERT INTO transportation.role (role_name, email) VALUES ('DRIVER', 'driver@transport.com');
--- INSERT INTO transportation.role (role_name, email) VALUES ('MANAGER', 'manager@transport.com');
--- INSERT INTO transportation.role (role_name, email) VALUES ('SUPER_ADMIN', 'admin@transport.com');
+-- INSERT INTO transportation.role (role_name) VALUES ('DRIVER');
+-- INSERT INTO transportation.role (role_name) VALUES ('SUPPORT_AGENT');
+-- INSERT INTO transportation.role (role_name) VALUES ('ADMIN');
 
 -- Insert default order statuses
 -- INSERT INTO transportation.order_status (status_name) VALUES ('PENDING');
