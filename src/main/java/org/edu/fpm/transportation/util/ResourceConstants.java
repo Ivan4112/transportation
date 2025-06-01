@@ -1,6 +1,9 @@
 package org.edu.fpm.transportation.util;
 
 public class ResourceConstants {
+
+    public static final String NOT_FOUND_ORDER_STATUS = "Initial order status not found";
+
     public static final String MESSAGE_ONLY_LATIN_LETTER_ALLOWED = "Only Latin letters are allowed";
     public static final String MESSAGE_EMAIL_NOT_VALID = "Invalid email address. Please ensure it follows the format: username@domain.com";
 
