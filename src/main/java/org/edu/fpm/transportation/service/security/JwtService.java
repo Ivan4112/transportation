@@ -94,8 +94,17 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String getUserIdFromToken(String token) {
-        return extractClaim(token, claims -> claims.get("userId", String.class));
+    public Integer getUserIdFromToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return extractClaim(token, claims -> claims.get("userId", Integer.class));
+        } catch (Exception e) {
+            log.error("Error getting userId from token", e);
+            return null;
+        }
     }
 
     public String extractTokenFromHeaders(Map<String, String> headers) {
