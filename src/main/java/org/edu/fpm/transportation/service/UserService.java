@@ -1,6 +1,5 @@
 package org.edu.fpm.transportation.service;
 
-import org.edu.fpm.transportation.dto.auth.AuthResponseDto;
 import org.edu.fpm.transportation.dto.auth.signup.SignUpRequestDto;
 import org.edu.fpm.transportation.entity.Role;
 import org.edu.fpm.transportation.entity.User;
@@ -32,9 +31,8 @@ public class UserService {
             .orElseThrow(() -> new NoSuchElementException("User not found with id: " + id));
     }
 
-    public User getUserByEmail(String email) {
-        return userRepository.findByEmail(email)
-            .orElseThrow(() -> new NoSuchElementException("User not found with email: " + email));
+    public Optional<User> getUserByEmail(String email) {
+        return userRepository.findByEmail(email);
     }
 
     public List<User> getUsersByRoleName(String roleName) {
