@@ -1,10 +1,12 @@
 package org.edu.fpm.transportation.service;
 
+import lombok.extern.slf4j.Slf4j;
 import org.edu.fpm.transportation.dto.auth.signup.SignUpRequestDto;
 import org.edu.fpm.transportation.entity.Role;
 import org.edu.fpm.transportation.entity.User;
 import org.edu.fpm.transportation.repository.RoleRepository;
 import org.edu.fpm.transportation.repository.UserRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,14 +14,17 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public List<User> getAllUsers() {
@@ -56,11 +61,11 @@ public class UserService {
         // Create new user
         User user = new User();
         user.setEmail(signUpRequestDto.getEmail());
-        user.setPasswordHash(signUpRequestDto.getPassword());
+        user.setPasswordHash(passwordEncoder.encode(signUpRequestDto.getPassword()));
         user.setFirstName(signUpRequestDto.getFirstName());
         user.setLastName(signUpRequestDto.getLastName());
         user.setRoleName(roleName);
-
+        log.info("passwordEncoder: {}", passwordEncoder.encode("StrongPass!1"));
         return userRepository.save(user);
     }
 
