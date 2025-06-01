@@ -1,14 +1,15 @@
 CREATE SCHEMA IF NOT EXISTS transportation;
 
 -- Drop existing tables if they exist to avoid conflicts
-DROP TABLE IF EXISTS transportation.order_location;
-DROP TABLE IF EXISTS transportation.cargo;
-DROP TABLE IF EXISTS transportation.route;
-DROP TABLE IF EXISTS transportation.orders;
-DROP TABLE IF EXISTS transportation.vehicle;
-DROP TABLE IF EXISTS transportation.user;
-DROP TABLE IF EXISTS transportation.order_status;
-DROP TABLE IF EXISTS transportation.role;
+DROP TABLE IF EXISTS transportation.notification;
+-- DROP TABLE IF EXISTS transportation.order_location;
+-- DROP TABLE IF EXISTS transportation.cargo;
+-- DROP TABLE IF EXISTS transportation.route;
+-- DROP TABLE IF EXISTS transportation.orders;
+-- DROP TABLE IF EXISTS transportation.vehicle;
+-- DROP TABLE IF EXISTS transportation.user;
+-- DROP TABLE IF EXISTS transportation.order_status;
+-- DROP TABLE IF EXISTS transportation.role;
 
 -- Role table with email field and renamed name field to role_name
 CREATE TABLE IF NOT EXISTS transportation.role (
@@ -43,13 +44,14 @@ CREATE TABLE IF NOT EXISTS transportation.order_status (
     status_name VARCHAR(50) NOT NULL
 );
 
--- Order table
+-- Order table with price field added
 CREATE TABLE IF NOT EXISTS transportation.orders (
     id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
     driver_id INT,
     vehicle_id INT,
     status_id INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (customer_id) REFERENCES transportation.user(id),
     FOREIGN KEY (driver_id) REFERENCES transportation.user(id),
@@ -63,6 +65,7 @@ CREATE TABLE IF NOT EXISTS transportation.route (
     order_id INT NOT NULL,
     start_location VARCHAR(255) NOT NULL,
     end_location VARCHAR(255) NOT NULL,
+    distance DECIMAL(10,2),
     estimated_time TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES transportation.orders(id)
 );
@@ -83,6 +86,18 @@ CREATE TABLE IF NOT EXISTS transportation.order_location (
     latitude DOUBLE NOT NULL,
     longitude DOUBLE NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (order_id) REFERENCES transportation.orders(id)
+);
+
+-- Notification table for status changes
+CREATE TABLE IF NOT EXISTS transportation.notification (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    order_id INT NOT NULL,
+    message TEXT NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES transportation.user(id),
     FOREIGN KEY (order_id) REFERENCES transportation.orders(id)
 );
 
