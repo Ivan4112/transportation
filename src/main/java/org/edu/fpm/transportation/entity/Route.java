@@ -6,6 +6,7 @@ import lombok.Setter;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 @Getter
@@ -18,7 +19,7 @@ public class Route {
     @Column(name = "id", nullable = false)
     private Integer id;
 
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
     @JoinColumn(name = "order_id", nullable = false)
     private Order order;
@@ -28,6 +29,9 @@ public class Route {
 
     @Column(name = "end_location", nullable = false)
     private String endLocation;
+    
+    @Column(name = "distance", precision = 10, scale = 2)
+    private BigDecimal distance;
 
     @Column(name = "estimated_time")
     private Instant estimatedTime;
