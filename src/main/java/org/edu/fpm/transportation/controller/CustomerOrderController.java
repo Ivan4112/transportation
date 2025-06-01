@@ -41,7 +41,7 @@ public class CustomerOrderController {
     public OrderResponseDto createOrder(@RequestHeader("Authorization") String authHeader, 
                                         @RequestBody OrderRequestDto orderRequest) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer customerId = Integer.valueOf(jwtService.getUserIdFromToken(token));
+        Integer customerId = jwtService.getUserIdFromToken(token);
         
         return customerOrderService.createOrder(customerId, orderRequest);
     }
@@ -53,8 +53,8 @@ public class CustomerOrderController {
     @PreAuthorize("hasRole('" + RoleType.Constants.CUSTOMER + "')")
     public List<OrderResponseDto> getCustomerOrders(@RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer customerId = Integer.valueOf(jwtService.getUserIdFromToken(token));
-        
+        Integer customerId = jwtService.getUserIdFromToken(token);
+
         return customerOrderService.getCustomerOrders(customerId);
     }
 
@@ -66,7 +66,7 @@ public class CustomerOrderController {
     public OrderResponseDto getCustomerOrder(@RequestHeader("Authorization") String authHeader,
                                             @PathVariable Integer orderId) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer customerId = Integer.valueOf(jwtService.getUserIdFromToken(token));
+        Integer customerId = jwtService.getUserIdFromToken(token);
         
         return customerOrderService.getCustomerOrder(customerId, orderId);
     }

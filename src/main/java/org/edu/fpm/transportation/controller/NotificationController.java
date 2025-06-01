@@ -27,7 +27,7 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     public List<NotificationDto> getUserNotifications(@RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer userId = Integer.valueOf(jwtService.getUserIdFromToken(token));
+        Integer userId = jwtService.getUserIdFromToken(token);
         
         return notificationService.getUserNotifications(userId);
     }
@@ -39,7 +39,7 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     public List<NotificationDto> getUnreadNotifications(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.substring(7); // Remove "Bearer " prefix
-        Integer userId = Integer.valueOf(jwtService.getUserIdFromToken(token));
+        Integer userId = jwtService.getUserIdFromToken(token);
         
         return notificationService.getUnreadNotifications(userId);
     }
@@ -51,7 +51,7 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Map<String, Long>> getUnreadCount(@RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer userId = Integer.valueOf(jwtService.getUserIdFromToken(token));
+        Integer userId = jwtService.getUserIdFromToken(token);
         
         long count = notificationService.getUnreadCount(userId);
         return ResponseEntity.ok(Map.of("count", count));
@@ -73,7 +73,7 @@ public class NotificationController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> markAllAsRead(@RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer userId = Integer.valueOf(jwtService.getUserIdFromToken(token));
+        Integer userId = jwtService.getUserIdFromToken(token);
         
         notificationService.markAllAsRead(userId);
         return ResponseEntity.ok().build();
