@@ -13,7 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -31,23 +31,26 @@ import java.util.List;
 @EnableMethodSecurity
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
         this.jwtAuthFilter = jwtAuthFilter;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        log.info("Configuring security filter chain");
+    public SecurityFilterChain apiSecurityFilterChain(HttpSecurity http) throws Exception {
+        log.info("Configuring API security filter chain");
 
         http
+                .securityMatcher("/api/**") // Only apply to API endpoints
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
-                    log.info("Configuring authorization rules");
+                    log.info("Configuring API authorization rules");
                     auth
                             .requestMatchers("/api/auth/**").permitAll()
-                            .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/webjars/**").permitAll()
+                            .requestMatchers("/api/v3/api-docs/**", "/api/swagger-ui/**").permitAll()
                             .anyRequest().authenticated();
                 })
                 .sessionManagement(session -> session
@@ -75,10 +78,7 @@ public class SecurityConfig {
     @Bean
     public AuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(username -> {
-            log.warn("Attempted to load user by username: {}", username);
-            throw new UsernameNotFoundException("Authentication through JWT only");
-        });
+        authProvider.setUserDetailsService(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }
