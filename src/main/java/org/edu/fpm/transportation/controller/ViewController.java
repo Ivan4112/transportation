@@ -104,4 +104,32 @@ public class ViewController {
     public String notifications() {
         return "notifications";
     }
+    
+    /**
+     * Driver orders list page
+     */
+    @GetMapping("/driver/orders")
+    @PreAuthorize("hasRole('" + RoleType.Constants.DRIVER + "')")
+    public String driverOrders() {
+        return "driver/orders";
+    }
+    
+    /**
+     * Driver order details page
+     */
+    @GetMapping("/driver/orders/{orderId}")
+    @PreAuthorize("hasRole('" + RoleType.Constants.DRIVER + "')")
+    public String driverOrderDetails(@PathVariable Integer orderId, Model model) {
+        model.addAttribute("orderId", orderId);
+        return "driver/order-details";
+    }
+    
+    /**
+     * Driver vehicle page
+     */
+    @GetMapping("/driver/vehicle")
+    @PreAuthorize("hasRole('" + RoleType.Constants.DRIVER + "')")
+    public String driverVehicle() {
+        return "driver/vehicle";
+    }
 }
