@@ -28,6 +28,10 @@
                 <li data-auth-required data-role="SUPPORT_AGENT"><a th:href="@{/support/orders}">Manage Orders</a></li>
                 <li data-auth-required data-role="SUPPORT_AGENT"><a th:href="@{/support/vehicles}">Manage Vehicles</a></li>
                 
+                <!-- Admin Navigation -->
+                <li data-auth-required data-role="ADMIN"><a th:href="@{/admin/dashboard}">Admin Dashboard</a></li>
+                <li data-auth-required data-role="ADMIN"><a th:href="@{/admin/users/roles}">User Roles</a></li>
+                
                 <!-- Notification Icon with Badge -->
                 <li data-auth-required class="notification-badge">
                     <a th:href="@{/notifications}">

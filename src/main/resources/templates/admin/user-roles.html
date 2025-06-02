@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Role Management - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/admin.css}">
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+    
+    <main class="container">
+        <h1>User Role Management</h1>
+        
+        <div class="card mb-4">
+            <div class="card-header">
+                <h2>Assign Role to User</h2>
+            </div>
+            <div class="card-body">
+                <div id="success-alert" class="alert alert-success" style="display: none;"></div>
+                <div id="error-alert" class="alert alert-danger" style="display: none;"></div>
+                
+                <form id="role-assignment-form">
+                    <div class="form-group">
+                        <label for="email" class="form-label">User Email</label>
+                        <input type="email" id="email" name="email" class="form-control" required>
+                        <small class="form-text">Enter the email of the user to assign a role. The user doesn't need to be registered yet.</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="roleName" class="form-label">Role</label>
+                        <select id="roleName" name="roleName" class="form-control" required>
+                            <option value="">Select a role</option>
+                            <option value="CUSTOMER">Customer</option>
+                            <option value="DRIVER">Driver</option>
+                            <option value="SUPPORT_AGENT">Support Agent</option>
+                            <option value="ADMIN">Admin</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Assign Role</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>User Role Assignments</h2>
+                    <div>
+                        <input type="text" id="search-input" class="form-control" placeholder="Search by email...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="roles-loading" class="loading">Loading role assignments...</div>
+                <div id="roles-table-container" style="display: none;">
+                    <button id="refresh-button" class="btn btn-secondary mb-3">Refresh</button>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roles-table-body">
+                            <!-- Role assignments will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="no-roles-message" style="display: none;">
+                    No role assignments found.
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div th:replace="fragments/footer :: footer"></div>
+    
+    <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/admin-roles.js}"></script>
+</body>
+</html>
