@@ -19,6 +19,10 @@
                 <li data-auth-required data-role="CUSTOMER"><a th:href="@{/customer/orders/create}">Create Order</a></li>
                 <li data-auth-required data-role="CUSTOMER"><a th:href="@{/customer/orders}">My Orders</a></li>
                 
+                <!-- Driver Navigation -->
+                <li data-auth-required data-role="DRIVER"><a th:href="@{/driver/orders}">My Assignments</a></li>
+                <li data-auth-required data-role="DRIVER"><a th:href="@{/driver/vehicle}">My Vehicle</a></li>
+                
                 <!-- Notification Icon with Badge -->
                 <li data-auth-required class="notification-badge">
                     <a th:href="@{/notifications}">

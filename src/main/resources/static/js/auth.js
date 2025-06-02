@@ -121,7 +121,7 @@ function redirectBasedOnRole(role, token) {
     if (role === 'CUSTOMER') {
         redirectUrl = '/customer/orders/create';
     } else if (role === 'DRIVER') {
-        redirectUrl = '/driver/dashboard';
+        redirectUrl = '/driver/orders';
     } else if (role === 'ADMIN') {
         redirectUrl = '/admin/dashboard';
     } else if (role === 'SUPPORT_AGENT') {
@@ -130,9 +130,8 @@ function redirectBasedOnRole(role, token) {
         redirectUrl = '/';
     }
     
-    // For the first navigation after login, include token in URL
-    // This ensures the token is available for the first page load
-    window.location.href = redirectUrl + '?token=' + encodeURIComponent(token);
+    // Don't include token in URL, it's already stored in localStorage and cookie
+    window.location.href = redirectUrl;
 }
 
 // Handle registration form submission
