@@ -5,12 +5,12 @@ import org.edu.fpm.transportation.dto.DriverOrderStatusDto;
 import org.edu.fpm.transportation.entity.Order;
 import org.edu.fpm.transportation.entity.OrderLocation;
 import org.edu.fpm.transportation.entity.OrderStatus;
+import org.edu.fpm.transportation.exception.ResourceNotFoundException;
 import org.edu.fpm.transportation.service.DriverService;
 import org.edu.fpm.transportation.service.OrderService;
 import org.edu.fpm.transportation.service.security.JwtService;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -76,18 +76,23 @@ public class DriverOrderController {
     public ResponseEntity<OrderLocation> getLatestOrderLocation(
             @PathVariable Integer orderId,
             @RequestHeader("Authorization") String authHeader) {
-        // Verify the driver has access to this order
-
-        String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
-        Integer userIdFromToken = jwtService.getUserIdFromToken(token);
-
-        driverService.getDriverOrderById(orderId, userIdFromToken);
-        
-        OrderLocation location = orderService.getLatestOrderLocation(orderId);
-        if (location != null) {
-            return ResponseEntity.ok(location);
-        } else {
-            return ResponseEntity.notFound().build();
+        try {
+            // Verify the driver has access to this order
+            String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
+            Integer userIdFromToken = jwtService.getUserIdFromToken(token);
+            
+            // This will throw ResourceNotFoundException if order doesn't exist
+            driverService.getDriverOrderById(orderId, userIdFromToken);
+            
+            OrderLocation location = orderService.getLatestOrderLocation(orderId);
+            if (location != null) {
+                return ResponseEntity.ok(location);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (ResourceNotFoundException e) {
+            // Let the GlobalExceptionHandler handle this exception
+            throw e;
         }
     }
 
