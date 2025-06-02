@@ -1,6 +1,8 @@
 package org.edu.fpm.transportation.advisor;
 
+import org.edu.fpm.transportation.exception.AccessDeniedException;
 import org.edu.fpm.transportation.exception.ApplicationException;
+import org.edu.fpm.transportation.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
@@ -18,6 +20,22 @@ public class GlobalExceptionHandler {
         Map<String, String> errorResponse = new HashMap<>();
         errorResponse.put("message", e.getMessage());
         return new ResponseEntity<>(errorResponse, HttpStatus.valueOf(e.getStatusCode()));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Resource not found");
+        errorResponse.put("error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Map<String, String>> handleAccessDeniedException(AccessDeniedException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Access denied");
+        errorResponse.put("error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
     @ExceptionHandler(Exception.class)

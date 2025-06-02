@@ -4,6 +4,7 @@ import org.edu.fpm.transportation.dto.OrderAssignmentDto;
 import org.edu.fpm.transportation.dto.OrderCreateDto;
 import org.edu.fpm.transportation.dto.OrderStatusUpdateDto;
 import org.edu.fpm.transportation.entity.*;
+import org.edu.fpm.transportation.exception.ResourceNotFoundException;
 import org.edu.fpm.transportation.repository.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,7 +45,7 @@ public class OrderService {
 
     public Order getOrderById(Integer id) {
         return orderRepository.findById(id)
-            .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + id));
     }
     
     public List<Order> getOrdersByCustomerId(Integer customerId) {
@@ -146,7 +147,7 @@ public class OrderService {
     
     public OrderLocation getLatestOrderLocation(Integer orderId) {
         Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
         return orderLocationRepository.findFirstByOrderOrderByTimestampDesc(order)
             .orElse(null);
@@ -154,7 +155,7 @@ public class OrderService {
     
     public List<OrderLocation> getOrderLocationHistory(Integer orderId) {
         Order order = orderRepository.findById(orderId)
-            .orElseThrow(() -> new NoSuchElementException("Order not found with id: " + orderId));
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
         
         return orderLocationRepository.findByOrderOrderByTimestampDesc(order);
     }
