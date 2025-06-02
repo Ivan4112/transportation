@@ -2,6 +2,7 @@ package org.edu.fpm.transportation.controller.driver;
 
 import lombok.RequiredArgsConstructor;
 import org.edu.fpm.transportation.dto.DriverOrderStatusDto;
+import org.edu.fpm.transportation.dto.OrderDto;
 import org.edu.fpm.transportation.entity.Order;
 import org.edu.fpm.transportation.entity.OrderLocation;
 import org.edu.fpm.transportation.entity.OrderStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Controller for driver order management operations
@@ -32,32 +34,35 @@ public class DriverOrderController {
      * Get all orders assigned to the authenticated driver
      */
     @GetMapping
-    public ResponseEntity<List<Order>> getAssignedOrders(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<List<OrderDto>> getAssignedOrders(@RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
         Integer userIdFromToken = jwtService.getUserIdFromToken(token);
 
         List<Order> orders = driverService.getAssignedOrders(userIdFromToken);
-        return ResponseEntity.ok(orders);
+        List<OrderDto> orderDtos = orders.stream()
+                .map(OrderDto::fromEntity)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(orderDtos);
     }
 
     /**
      * Get a specific order by ID (only if assigned to the driver)
      */
     @GetMapping("/{orderId}")
-    public ResponseEntity<Order> getOrderById(@PathVariable Integer orderId,
+    public ResponseEntity<OrderDto> getOrderById(@PathVariable Integer orderId,
                                               @RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
         Integer userIdFromToken = jwtService.getUserIdFromToken(token);
 
         Order order = driverService.getDriverOrderById(orderId, userIdFromToken);
-        return ResponseEntity.ok(order);
+        return ResponseEntity.ok(OrderDto.fromEntity(order));
     }
 
     /**
      * Update the status of an order
      */
     @PutMapping("/{orderId}/status")
-    public ResponseEntity<Order> updateOrderStatus(
+    public ResponseEntity<OrderDto> updateOrderStatus(
             @PathVariable Integer orderId,
             @RequestBody DriverOrderStatusDto statusUpdateDto,
             @RequestHeader("Authorization") String authHeader) {
@@ -66,7 +71,7 @@ public class DriverOrderController {
         Integer userIdFromToken = jwtService.getUserIdFromToken(token);
 
         Order updatedOrder = driverService.updateOrderStatus(orderId, statusUpdateDto, userIdFromToken);
-        return ResponseEntity.ok(updatedOrder);
+        return ResponseEntity.ok(OrderDto.fromEntity(updatedOrder));
     }
 
     /**
