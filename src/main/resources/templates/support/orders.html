@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/orders.css}">
+    <script th:src="@{/js/auth.js}"></script>
+    <style>
+        .filter-controls {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .filter-group {
+            margin-right: 15px;
+            margin-bottom: 10px;
+        }
+        
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 200px;
+        }
+        
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background-color: #f1f1f1;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+    
+    <main class="container">
+        <h1>Manage Orders</h1>
+        
+        <div class="filter-controls">
+            <div class="filter-group">
+                <label for="status-filter">Filter by Status:</label>
+                <select id="status-filter" class="form-control">
+                    <option value="">All Statuses</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="ASSIGNED">Assigned</option>
+                    <option value="IN_TRANSIT">In Transit</option>
+                    <option value="WAITING_UNLOADING">Waiting Unloading</option>
+                    <option value="DELIVERED">Delivered</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <button id="apply-filters" class="btn btn-primary">Apply Filters</button>
+                <button id="clear-filters" class="btn btn-secondary">Clear Filters</button>
+            </div>
+        </div>
+        
+        <div class="orders-container">
+            <div class="orders-list">
+                <div id="loading" class="loading">Loading orders...</div>
+                <div id="no-orders" class="no-orders" style="display: none;">No orders found.</div>
+                <div id="orders-table-container" style="display: none;">
+                    <table class="orders-table">
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Customer</th>
+                                <th>Driver</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <!-- Orders will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div th:replace="fragments/footer :: footer"></div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated and has SUPPORT_AGENT role
+            if (!isAuthenticated() || !hasRole('SUPPORT_AGENT')) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Set up filter controls
+            document.getElementById('apply-filters').addEventListener('click', loadOrders);
+            document.getElementById('clear-filters').addEventListener('click', clearFilters);
+            
+            // Load orders initially
+            loadOrders();
+        });
+        
+        function clearFilters() {
+            document.getElementById('status-filter').value = '';
+            loadOrders();
+        }
+        
+        function loadOrders() {
+            const statusFilter = document.getElementById('status-filter').value;
+            
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('no-orders').style.display = 'none';
+            document.getElementById('orders-table-container').style.display = 'none';
+            
+            fetch('/api/support/orders', {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load orders');
+                }
+                return response.json();
+            })
+            .then(orders => {
+                console.log('Orders loaded:', orders);
+                document.getElementById('loading').style.display = 'none';
+                
+                // Apply filters
+                let filteredOrders = orders;
+                if (statusFilter) {
+                    filteredOrders = orders.filter(order => order.status.statusName === statusFilter);
+                }
+                
+                if (filteredOrders.length === 0) {
+                    document.getElementById('no-orders').style.display = 'block';
+                    return;
+                }
+                
+                const tableBody = document.getElementById('orders-table-body');
+                tableBody.innerHTML = '';
+                
+                filteredOrders.forEach(order => {
+                    const row = document.createElement('tr');
+                    
+                    // Format date
+                    const createdDate = new Date(order.createdAt);
+                    const formattedDate = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString();
+                    
+                    // Get driver info
+                    const driverInfo = order.driver ? 
+                        `${order.driver.firstName} ${order.driver.lastName}` : 
+                        'Not Assigned';
+                    
+                    row.innerHTML = `
+                        <td>${order.id}</td>
+                        <td>${order.customer.firstName} ${order.customer.lastName}</td>
+                        <td>${driverInfo}</td>
+                        <td>${order.status.statusName}</td>
+                        <td>${formattedDate}</td>
+                        <td>
+                            <a href="/support/orders/${order.id}" class="btn btn-primary">View Details</a>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(row);
+                });
+                
+                document.getElementById('orders-table-container').style.display = 'block';
+            })
+            .catch(error => {
+                console.error('Error loading orders:', error);
+                document.getElementById('loading').textContent = 'Error loading orders. Please try again.';
+            });
+        }
+    </script>
+</body>
+</html>

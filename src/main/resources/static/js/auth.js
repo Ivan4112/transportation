@@ -28,6 +28,12 @@ function isAuthenticated() {
     return getToken() !== null;
 }
 
+// Check if user has a specific role
+function hasRole(roleName) {
+    const userRole = localStorage.getItem('user_role');
+    return userRole === roleName;
+}
+
 // Handle login form submission
 function handleLogin(event) {
     event.preventDefault();

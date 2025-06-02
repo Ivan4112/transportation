@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Form - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script th:src="@{/js/auth.js}"></script>
+    <style>
+        .back-link {
+            margin-bottom: 20px;
+        }
+        
+        .back-link a {
+            color: #555;
+            text-decoration: none;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .form-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn-primary {
+            background-color: #4CAF50;
+        }
+        
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+    
+    <main class="container">
+        <div class="back-link">
+            <a href="/support/vehicles">&larr; Back to Vehicles</a>
+        </div>
+        
+        <h1 id="form-title">Add New Vehicle</h1>
+        
+        <div id="loading" class="loading">Loading...</div>
+        
+        <div id="vehicle-form-container" class="form-container" style="display: none;">
+            <form id="vehicle-form">
+                <div class="form-group">
+                    <label for="license-plate" class="form-label">License Plate *</label>
+                    <input type="text" id="license-plate" name="licensePlate" class="form-control" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="capacity" class="form-label">Capacity (kg) *</label>
+                    <input type="number" id="capacity" name="capacity" class="form-control" min="0" step="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="photo-url" class="form-label">Photo URL</label>
+                    <input type="url" id="photo-url" name="photoUrl" class="form-control">
+                </div>
+                
+                <div class="form-group">
+                    <label for="driver-select" class="form-label">Driver *</label>
+                    <select id="driver-select" name="driver" class="form-control" required>
+                        <option value="">-- Select Driver --</option>
+                        <!-- Drivers will be loaded dynamically -->
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Save Vehicle</button>
+                </div>
+            </form>
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;"></div>
+    </main>
+    
+    <div th:replace="fragments/footer :: footer"></div>
+    
+    <script th:inline="javascript">
+        let isEditMode = false;
+        let vehicleId = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated and has SUPPORT_AGENT role
+            if (!isAuthenticated() || !hasRole('SUPPORT_AGENT')) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Check if we're in edit mode
+            const pathParts = window.location.pathname.split('/');
+            if (pathParts.includes('edit')) {
+                isEditMode = true;
+                vehicleId = pathParts[pathParts.length - 2];
+                document.getElementById('form-title').textContent = 'Edit Vehicle';
+            }
+            
+            // Load drivers
+            loadDrivers().then(() => {
+                if (isEditMode) {
+                    loadVehicleDetails(vehicleId);
+                } else {
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('vehicle-form-container').style.display = 'block';
+                }
+            });
+            
+            // Set up form submission
+            document.getElementById('vehicle-form').addEventListener('submit', handleFormSubmit);
+        });
+        
+        async function loadDrivers() {
+            try {
+                const response = await fetch('/api/support/orders/drivers', {
+                    headers: {
+                        'Authorization': 'Bearer ' + getToken()
+                    }
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Failed to load drivers');
+                }
+                
+                const drivers = await response.json();
+                console.log('Drivers loaded:', drivers);
+                const driverSelect = document.getElementById('driver-select');
+                
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    driverSelect.appendChild(option);
+                });
+                
+                return drivers;
+            } catch (error) {
+                console.error('Error loading drivers:', error);
+                showError('Error loading drivers. Please try again.');
+                return [];
+            }
+        }
+        
+        function loadVehicleDetails(vehicleId) {
+            fetch(`/api/support/vehicles/${vehicleId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load vehicle details');
+                }
+                return response.json();
+            })
+            .then(vehicle => {
+                console.log('Vehicle details loaded:', vehicle);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('vehicle-form-container').style.display = 'block';
+                
+                // Populate form fields
+                document.getElementById('license-plate').value = vehicle.licensePlate;
+                document.getElementById('capacity').value = vehicle.capacity;
+                document.getElementById('photo-url').value = vehicle.photoUrl || '';
+                
+                // Set driver
+                if (vehicle.driver && vehicle.driver.id) {
+                    document.getElementById('driver-select').value = vehicle.driver.id;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading vehicle details:', error);
+                showError('Error loading vehicle details. Please try again.');
+            });
+        }
+        
+        function handleFormSubmit(event) {
+            event.preventDefault();
+            
+            const licensePlate = document.getElementById('license-plate').value;
+            const capacity = parseFloat(document.getElementById('capacity').value);
+            const photoUrl = document.getElementById('photo-url').value;
+            const driverId = document.getElementById('driver-select').value;
+            
+            if (!licensePlate || !capacity || !driverId) {
+                showError('Please fill in all required fields.');
+                return;
+            }
+            
+            const vehicleData = {
+                licensePlate: licensePlate,
+                capacity: capacity,
+                photoUrl: photoUrl || null,
+                driver: {
+                    id: parseInt(driverId)
+                }
+            };
+            
+            // Add ID if in edit mode
+            if (isEditMode) {
+                vehicleData.id = parseInt(vehicleId);
+            }
+            
+            const url = isEditMode ? 
+                `/api/support/vehicles/${vehicleId}` : 
+                '/api/support/vehicles';
+                
+            const method = isEditMode ? 'PUT' : 'POST';
+            
+            // Disable submit button
+            const submitButton = document.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Saving...';
+            
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Authorization': 'Bearer ' + getToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(vehicleData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to save vehicle');
+                    });
+                }
+                return response.json();
+            })
+            .then(savedVehicle => {
+                console.log('Vehicle saved:', savedVehicle);
+                // Redirect back to vehicles list
+                window.location.href = '/support/vehicles';
+            })
+            .catch(error => {
+                console.error('Error saving vehicle:', error);
+                showError('Error saving vehicle: ' + error.message);
+                
+                // Re-enable submit button
+                submitButton.disabled = false;
+                submitButton.textContent = 'Save Vehicle';
+            });
+        }
+        
+        function showError(message) {
+            const errorElement = document.getElementById('error-message');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            // Scroll to error message
+            errorElement.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>

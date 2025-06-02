@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <script th:src="@{/js/auth.js}"></script>
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        .back-link {
+            margin-bottom: 20px;
+        }
+        
+        .back-link a {
+            color: #555;
+            text-decoration: none;
+        }
+        
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .order-info {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .order-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .order-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .order-section {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .location-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        
+        .location-time {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .location-coords {
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .location-coords span {
+            margin-right: 15px;
+        }
+        
+        .location-comment {
+            font-style: italic;
+            color: #555;
+            border-left: 3px solid #4CAF50;
+            padding-left: 10px;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            font-size: 18px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+    
+    <main class="container">
+        <div class="back-link">
+            <a href="/support/orders">&larr; Back to Orders</a>
+        </div>
+        
+        <h1>Order Details</h1>
+        
+        <div id="loading" class="loading">Loading order details...</div>
+        
+        <div id="order-details" class="order-details" style="display: none;">
+            <div class="order-info">
+                <h2>Order #<span id="order-id"></span></h2>
+                <div class="status-badge">
+                    <span id="order-status"></span>
+                </div>
+                <p><strong>Created:</strong> <span id="order-created"></span></p>
+                <p><strong>Customer:</strong> <span id="order-customer"></span></p>
+                <p><strong>Driver:</strong> <span id="order-driver">Not Assigned</span></p>
+                <p><strong>Vehicle:</strong> <span id="order-vehicle">Not Assigned</span></p>
+            </div>
+            
+            <div class="order-sections">
+                <div class="order-section">
+                    <h3>Route Information</h3>
+                    <div id="route-info">
+                        <p><strong>From:</strong> <span id="route-start"></span></p>
+                        <p><strong>To:</strong> <span id="route-end"></span></p>
+                    </div>
+                    <div id="map" style="height: 300px; margin-top: 20px;"></div>
+                </div>
+                
+                <div class="order-section">
+                    <h3>Cargo Information</h3>
+                    <div id="cargo-info">
+                        <p><strong>Type:</strong> <span id="cargo-type"></span></p>
+                        <p><strong>Weight:</strong> <span id="cargo-weight"></span> kg</p>
+                    </div>
+                </div>
+                
+                <div class="order-section" id="assign-driver-section">
+                    <h3>Assign Driver</h3>
+                    <div id="assign-driver-form">
+                        <div class="form-group">
+                            <label for="driver-select">Select Driver:</label>
+                            <select id="driver-select" class="form-control">
+                                <option value="">-- Select Driver --</option>
+                                <!-- Drivers will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="vehicle-select">Select Vehicle:</label>
+                            <select id="vehicle-select" class="form-control" disabled>
+                                <option value="">-- Select Vehicle --</option>
+                                <!-- Vehicles will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button id="assign-btn" class="btn" disabled>Assign Driver & Vehicle</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="order-section">
+                    <h3>Update Status</h3>
+                    <div class="status-update-form">
+                        <div class="form-group">
+                            <label for="status-select">New Status:</label>
+                            <select id="status-select" class="form-control">
+                                <option value="">-- Select Status --</option>
+                                <option value="1">PENDING</option>
+                                <option value="2">ASSIGNED</option>
+                                <option value="3">IN_TRANSIT</option>
+                                <option value="4">WAITING_UNLOADING</option>
+                                <option value="5">DELIVERED</option>
+                                <option value="6">CANCELLED</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <button id="update-status-btn" class="btn" disabled>Update Status</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="order-section">
+                    <h3>Location History</h3>
+                    <div id="location-history">
+                        <div id="location-loading">Loading location history...</div>
+                        <div id="no-locations" style="display: none;">No location updates yet.</div>
+                        <div id="location-list" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div th:replace="fragments/footer :: footer"></div>
+    
+    <script th:inline="javascript">
+        let map;
+        let orderId;
+        let driverVehicles = {};
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated and has SUPPORT_AGENT role
+            if (!isAuthenticated() || !hasRole('SUPPORT_AGENT')) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Get order ID from URL
+            const pathParts = window.location.pathname.split('/');
+            orderId = pathParts[pathParts.length - 1];
+            
+            // Load order details
+            loadOrderDetails(orderId);
+            
+            // Load drivers
+            loadDrivers();
+            
+            // Set up event listeners
+            document.getElementById('driver-select').addEventListener('change', handleDriverChange);
+            document.getElementById('assign-btn').addEventListener('click', assignDriverToOrder);
+            document.getElementById('status-select').addEventListener('change', function() {
+                document.getElementById('update-status-btn').disabled = !this.value;
+            });
+            document.getElementById('update-status-btn').addEventListener('click', updateOrderStatus);
+        });
+        
+        function loadOrderDetails(orderId) {
+            fetch(`/api/orders/${orderId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load order details');
+                }
+                return response.json();
+            })
+            .then(order => {
+                console.log('Order details loaded:', order);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('order-details').style.display = 'block';
+                
+                // Populate order details
+                document.getElementById('order-id').textContent = order.id;
+                document.getElementById('order-status').textContent = order.status.statusName;
+                
+                const createdDate = new Date(order.createdAt);
+                document.getElementById('order-created').textContent = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString();
+                
+                document.getElementById('order-customer').textContent = `${order.customer.firstName} ${order.customer.lastName}`;
+                
+                // Set driver and vehicle info if assigned
+                if (order.driver) {
+                    document.getElementById('order-driver').textContent = `${order.driver.firstName} ${order.driver.lastName}`;
+                    
+                    // Disable driver assignment if already assigned
+                    if (order.status.statusName !== 'PENDING') {
+                        document.getElementById('assign-driver-section').innerHTML = '<h3>Driver Assignment</h3><p>Driver already assigned. Cannot change driver after order is in progress.</p>';
+                    }
+                }
+                
+                if (order.vehicle) {
+                    document.getElementById('order-vehicle').textContent = `${order.vehicle.licensePlate} (Capacity: ${order.vehicle.capacity} kg)`;
+                }
+                
+                // Set current status in dropdown
+                const statusSelect = document.getElementById('status-select');
+                for (let i = 0; i < statusSelect.options.length; i++) {
+                    if (statusSelect.options[i].text === order.status.statusName) {
+                        statusSelect.selectedIndex = i;
+                        break;
+                    }
+                }
+                
+                // Load route and cargo info
+                loadRouteInfo(orderId);
+                loadCargoInfo(orderId);
+                
+                // Load location history
+                loadLocationHistory(orderId);
+            })
+            .catch(error => {
+                console.error('Error loading order details:', error);
+                document.getElementById('loading').textContent = 'Error loading order details. Please try again.';
+            });
+        }
+        
+        function loadRouteInfo(orderId) {
+            fetch(`/api/orders/${orderId}/route`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load route information');
+                }
+                return response.json();
+            })
+            .then(route => {
+                console.log('Route info loaded:', route);
+                document.getElementById('route-start').textContent = route.startLocation;
+                document.getElementById('route-end').textContent = route.endLocation;
+                
+                // Initialize map
+                initMap();
+            })
+            .catch(error => {
+                console.error('Error loading route information:', error);
+                document.getElementById('route-info').innerHTML = '<p>Error loading route information.</p>';
+            });
+        }
+        
+        function loadCargoInfo(orderId) {
+            fetch(`/api/orders/${orderId}/cargo`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load cargo information');
+                }
+                return response.json();
+            })
+            .then(cargo => {
+                console.log('Cargo info loaded:', cargo);
+                document.getElementById('cargo-type').textContent = cargo.type;
+                document.getElementById('cargo-weight').textContent = cargo.weight;
+            })
+            .catch(error => {
+                console.error('Error loading cargo information:', error);
+                document.getElementById('cargo-info').innerHTML = '<p>Error loading cargo information.</p>';
+            });
+        }
+        
+        function loadLocationHistory(orderId) {
+            fetch(`/api/orders/${orderId}/locations`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        return [];
+                    }
+                    throw new Error('Failed to load location history');
+                }
+                return response.json();
+            })
+            .then(locations => {
+                console.log('Location history loaded:', locations);
+                document.getElementById('location-loading').style.display = 'none';
+                
+                if (!locations || locations.length === 0) {
+                    document.getElementById('no-locations').style.display = 'block';
+                    return;
+                }
+                
+                const locationList = document.getElementById('location-list');
+                locationList.innerHTML = '';
+                locationList.style.display = 'block';
+                
+                locations.forEach(location => {
+                    const timestamp = new Date(location.timestamp);
+                    const formattedTime = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
+                    
+                    const locationItem = document.createElement('div');
+                    locationItem.className = 'location-item';
+                    locationItem.innerHTML = `
+                        <div class="location-time">${formattedTime}</div>
+                        <div class="location-coords">
+                            <span>Lat: ${location.latitude.toFixed(6)}</span>
+                            <span>Lng: ${location.longitude.toFixed(6)}</span>
+                        </div>
+                        ${location.statusComment ? `<div class="location-comment">${location.statusComment}</div>` : ''}
+                    `;
+                    
+                    locationList.appendChild(locationItem);
+                    
+                    // Add marker to map
+                    if (map) {
+                        L.marker([location.latitude, location.longitude])
+                            .addTo(map)
+                            .bindPopup(`${formattedTime}<br>${location.statusComment || ''}`);
+                    }
+                });
+                
+                // Center map on the latest location
+                if (map && locations.length > 0) {
+                    const latest = locations[0]; // Assuming sorted by timestamp desc
+                    map.setView([latest.latitude, latest.longitude], 13);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading location history:', error);
+                document.getElementById('location-loading').textContent = 'Error loading location history.';
+            });
+        }
+        
+        function loadDrivers() {
+            fetch('/api/support/orders/drivers', {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load drivers');
+                }
+                return response.json();
+            })
+            .then(drivers => {
+                console.log('Drivers loaded:', drivers);
+                const driverSelect = document.getElementById('driver-select');
+                
+                drivers.forEach(driver => {
+                    const option = document.createElement('option');
+                    option.value = driver.id;
+                    option.textContent = `${driver.firstName} ${driver.lastName}`;
+                    driverSelect.appendChild(option);
+                });
+                
+                // Load vehicles for each driver
+                loadVehicles(drivers);
+            })
+            .catch(error => {
+                console.error('Error loading drivers:', error);
+            });
+        }
+        
+        function loadVehicles(drivers) {
+            fetch('/api/support/vehicles', {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load vehicles');
+                }
+                return response.json();
+            })
+            .then(vehicles => {
+                console.log('Vehicles loaded:', vehicles);
+                // Group vehicles by driver
+                vehicles.forEach(vehicle => {
+                    if (vehicle.driver && vehicle.driver.id) {
+                        if (!driverVehicles[vehicle.driver.id]) {
+                            driverVehicles[vehicle.driver.id] = [];
+                        }
+                        driverVehicles[vehicle.driver.id].push(vehicle);
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading vehicles:', error);
+            });
+        }
+        
+        function handleDriverChange() {
+            const driverId = document.getElementById('driver-select').value;
+            const vehicleSelect = document.getElementById('vehicle-select');
+            const assignBtn = document.getElementById('assign-btn');
+            
+            // Clear vehicle options
+            vehicleSelect.innerHTML = '<option value="">-- Select Vehicle --</option>';
+            
+            if (!driverId) {
+                vehicleSelect.disabled = true;
+                assignBtn.disabled = true;
+                return;
+            }
+            
+            // Enable vehicle select
+            vehicleSelect.disabled = false;
+            
+            // Add vehicles for selected driver
+            const vehicles = driverVehicles[driverId] || [];
+            if (vehicles.length === 0) {
+                const option = document.createElement('option');
+                option.disabled = true;
+                option.textContent = 'No vehicles available for this driver';
+                vehicleSelect.appendChild(option);
+                assignBtn.disabled = true;
+            } else {
+                vehicles.forEach(vehicle => {
+                    const option = document.createElement('option');
+                    option.value = vehicle.id;
+                    option.textContent = `${vehicle.licensePlate} (Capacity: ${vehicle.capacity} kg)`;
+                    vehicleSelect.appendChild(option);
+                });
+                
+                // Enable assign button when vehicle is selected
+                vehicleSelect.addEventListener('change', function() {
+                    assignBtn.disabled = !this.value;
+                });
+            }
+        }
+        
+        function assignDriverToOrder() {
+            const driverId = document.getElementById('driver-select').value;
+            const vehicleId = document.getElementById('vehicle-select').value;
+            
+            if (!driverId || !vehicleId) {
+                alert('Please select both driver and vehicle');
+                return;
+            }
+            
+            // Disable button during assignment
+            const assignBtn = document.getElementById('assign-btn');
+            assignBtn.disabled = true;
+            assignBtn.textContent = 'Assigning...';
+            
+            fetch(`/api/support/orders/${orderId}/assign?driverId=${driverId}&vehicleId=${vehicleId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to assign driver');
+                    });
+                }
+                return response.json();
+            })
+            .then(updatedOrder => {
+                console.log('Order updated:', updatedOrder);
+                // Reload page to show updated information
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error('Error assigning driver:', error);
+                alert('Error assigning driver: ' + error.message);
+                
+                // Re-enable button
+                assignBtn.disabled = false;
+                assignBtn.textContent = 'Assign Driver & Vehicle';
+            });
+        }
+        
+        function updateOrderStatus() {
+            const statusId = document.getElementById('status-select').value;
+            
+            if (!statusId) {
+                alert('Please select a status');
+                return;
+            }
+            
+            // Disable button during update
+            const updateBtn = document.getElementById('update-status-btn');
+            updateBtn.disabled = true;
+            updateBtn.textContent = 'Updating...';
+            
+            fetch(`/api/support/orders/${orderId}/status?statusId=${statusId}`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.error || 'Failed to update order status');
+                    });
+                }
+                return response.json();
+            })
+            .then(updatedOrder => {
+                console.log('Status updated:', updatedOrder);
+                // Update status display
+                document.getElementById('order-status').textContent = updatedOrder.status.statusName;
+                
+                // Re-enable button
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Status';
+                
+                alert('Order status updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating order status:', error);
+                alert('Error updating order status: ' + error.message);
+                
+                // Re-enable button
+                updateBtn.disabled = false;
+                updateBtn.textContent = 'Update Status';
+            });
+        }
+        
+        function initMap() {
+            map = L.map('map').setView([50.4501, 30.5234], 13); // Default view (Kyiv)
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        }
+    </script>
+</body>
+</html>
