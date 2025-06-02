@@ -159,4 +159,20 @@ public class OrderService {
         
         return orderLocationRepository.findByOrderOrderByTimestampDesc(order);
     }
+    
+    public Route getOrderRoute(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        return routeRepository.findByOrder(order)
+            .orElseThrow(() -> new ResourceNotFoundException("Route not found for order: " + orderId));
+    }
+    
+    public Cargo getOrderCargo(Integer orderId) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new ResourceNotFoundException("Order not found with id: " + orderId));
+        
+        return cargoRepository.findByOrder(order)
+            .orElseThrow(() -> new ResourceNotFoundException("Cargo not found for order: " + orderId));
+    }
 }

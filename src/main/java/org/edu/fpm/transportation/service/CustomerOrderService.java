@@ -1,6 +1,7 @@
 package org.edu.fpm.transportation.service;
 
 import lombok.RequiredArgsConstructor;
+import org.edu.fpm.transportation.dto.OrderDto;
 import org.edu.fpm.transportation.dto.order.OrderPriceResponseDto;
 import org.edu.fpm.transportation.dto.order.OrderRequestDto;
 import org.edu.fpm.transportation.dto.order.OrderResponseDto;
@@ -65,7 +66,7 @@ public class CustomerOrderService {
      * Create a new order for a customer
      */
     @Transactional
-    public OrderResponseDto createOrder(Integer customerId, OrderRequestDto orderRequest) {
+    public Order createOrder(OrderRequestDto orderRequest, Integer customerId) {
         User customer = userRepository.findById(customerId)
                 .orElseThrow(() -> new NoSuchElementException("Customer not found with id: " + customerId));
         
@@ -123,35 +124,23 @@ public class CustomerOrderService {
                 "Your order has been created and is pending assignment."
         );
         
-        return convertToResponseDto(savedOrder, cargo, route);
+        return savedOrder;
     }
     
     /**
      * Get all orders for a customer
      */
-    public List<OrderResponseDto> getCustomerOrders(Integer customerId) {
+    public List<Order> getCustomerOrders(Integer customerId) {
         User customer = userRepository.findById(customerId)
                 .orElseThrow(() -> new NoSuchElementException("Customer not found with id: " + customerId));
         
-        List<Order> orders = orderRepository.findByCustomer(customer);
-        List<OrderResponseDto> responseDtos = new ArrayList<>();
-        
-        for (Order order : orders) {
-            Optional<Cargo> cargoOpt = cargoRepository.findByOrder(order);
-            Optional<Route> routeOpt = routeRepository.findByOrder(order);
-            
-            if (cargoOpt.isPresent() && routeOpt.isPresent()) {
-                responseDtos.add(convertToResponseDto(order, cargoOpt.get(), routeOpt.get()));
-            }
-        }
-        
-        return responseDtos;
+        return orderRepository.findByCustomer(customer);
     }
     
     /**
      * Get a specific order for a customer
      */
-    public OrderResponseDto getCustomerOrder(Integer customerId, Integer orderId) {
+    public Order getCustomerOrderById(Integer orderId, Integer customerId) {
         User customer = userRepository.findById(customerId)
                 .orElseThrow(() -> new NoSuchElementException("Customer not found with id: " + customerId));
         
@@ -163,42 +152,6 @@ public class CustomerOrderService {
             throw new IllegalArgumentException("Order does not belong to the specified customer");
         }
         
-        Cargo cargo = cargoRepository.findByOrder(order)
-                .orElseThrow(() -> new NoSuchElementException("Cargo not found for order: " + orderId));
-        
-        Route route = routeRepository.findByOrder(order)
-                .orElseThrow(() -> new NoSuchElementException("Route not found for order: " + orderId));
-        
-        return convertToResponseDto(order, cargo, route);
-    }
-    
-    /**
-     * Convert entities to response DTO
-     */
-    private OrderResponseDto convertToResponseDto(Order order, Cargo cargo, Route route) {
-        OrderResponseDto dto = new OrderResponseDto();
-        dto.setId(order.getId());
-        
-        dto.setCustomerName(order.getCustomer().getFirstName() + " " + order.getCustomer().getLastName());
-        
-        if (order.getDriver() != null) {
-            dto.setDriverName(order.getDriver().getFirstName() + " " + order.getDriver().getLastName());
-        }
-        
-        if (order.getVehicle() != null) {
-            dto.setVehicleLicensePlate(order.getVehicle().getLicensePlate());
-        }
-        
-        dto.setStatus(order.getStatus().getStatusName());
-        dto.setPrice(order.getPrice());
-        dto.setCargoType(cargo.getType());
-        dto.setCargoWeight(cargo.getWeight());
-        dto.setStartLocation(route.getStartLocation());
-        dto.setEndLocation(route.getEndLocation());
-        dto.setDistance(route.getDistance());
-        dto.setCreatedAt(order.getCreatedAt());
-        dto.setEstimatedDeliveryTime(route.getEstimatedTime());
-        
-        return dto;
+        return order;
     }
 }
