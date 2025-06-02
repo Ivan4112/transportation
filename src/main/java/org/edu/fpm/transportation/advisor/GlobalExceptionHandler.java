@@ -6,6 +6,7 @@ import org.edu.fpm.transportation.exception.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageConversionException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -38,6 +39,22 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.FORBIDDEN);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Bad request");
+        errorResponse.put("error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<Map<String, String>> handleMissingParamException(MissingServletRequestParameterException e) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("message", "Missing required parameter");
+        errorResponse.put("error", e.getMessage());
+        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, String>> handleGenericException(Exception e) {
         Map<String, String> errorResponse = new HashMap<>();
@@ -50,7 +67,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageConversionException.class)
     public ResponseEntity<Map<String, Object>> handleEnumConversionException(HttpMessageConversionException e) {
         Map<String, Object> errorResponse = new HashMap<>();
-        errorResponse.put("message", "Invalid report type value. Must be one of: SALES_STATISTICS, SUPPORT_AGENT_PERFORMANCE");
+        errorResponse.put("message", "Invalid enum value");
+        errorResponse.put("error", e.getMessage());
         errorResponse.put("errorCode", "INVALID_ENUM");
         errorResponse.put("status", 400);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
