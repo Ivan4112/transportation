@@ -125,11 +125,58 @@ public class ViewController {
     }
     
     /**
-     * Driver vehicle page
+     * Support agent dashboard
      */
-    @GetMapping("/driver/vehicle")
-    @PreAuthorize("hasRole('" + RoleType.Constants.DRIVER + "')")
-    public String driverVehicle() {
-        return "driver/vehicle";
+    @GetMapping("/support/dashboard")
+    @PreAuthorize("hasRole('" + RoleType.Constants.SUPPORT_AGENT + "')")
+    public String supportDashboard() {
+        return "support/dashboard";
+    }
+
+    /**
+     * Support agent order management
+     */
+    @GetMapping("/support/orders")
+    @PreAuthorize("hasRole('" + RoleType.Constants.SUPPORT_AGENT + "')")
+    public String supportOrders() {
+        return "support/orders";
+    }
+
+    /**
+     * Support agent order details
+     */
+    @GetMapping("/support/orders/{orderId}")
+    @PreAuthorize("hasRole('" + RoleType.Constants.SUPPORT_AGENT + "')")
+    public String supportOrderDetails(@PathVariable Integer orderId, Model model) {
+        model.addAttribute("orderId", orderId);
+        return "support/order-details";
+    }
+
+    /**
+     * Support agent vehicle management
+     */
+    @GetMapping("/support/vehicles")
+    @PreAuthorize("hasRole('" + RoleType.Constants.SUPPORT_AGENT + "')")
+    public String supportVehicles() {
+        return "support/vehicles";
+    }
+
+    /**
+     * Support agent vehicle form (create/edit)
+     */
+    @GetMapping("/support/vehicles/form")
+    @PreAuthorize("hasRole('" + RoleType.Constants.SUPPORT_AGENT + "')")
+    public String supportVehicleForm() {
+        return "support/vehicle-form";
+    }
+
+    /**
+     * Support agent vehicle edit form
+     */
+    @GetMapping("/support/vehicles/{vehicleId}/edit")
+    @PreAuthorize("hasRole('" + RoleType.Constants.SUPPORT_AGENT + "')")
+    public String supportVehicleEdit(@PathVariable Integer vehicleId, Model model) {
+        model.addAttribute("vehicleId", vehicleId);
+        return "support/vehicle-form";
     }
 }

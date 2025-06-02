@@ -23,6 +23,11 @@
                 <li data-auth-required data-role="DRIVER"><a th:href="@{/driver/orders}">My Assignments</a></li>
                 <li data-auth-required data-role="DRIVER"><a th:href="@{/driver/vehicle}">My Vehicle</a></li>
                 
+                <!-- Support Agent Navigation -->
+                <li data-auth-required data-role="SUPPORT_AGENT"><a th:href="@{/support/dashboard}">Dashboard</a></li>
+                <li data-auth-required data-role="SUPPORT_AGENT"><a th:href="@{/support/orders}">Manage Orders</a></li>
+                <li data-auth-required data-role="SUPPORT_AGENT"><a th:href="@{/support/vehicles}">Manage Vehicles</a></li>
+                
                 <!-- Notification Icon with Badge -->
                 <li data-auth-required class="notification-badge">
                     <a th:href="@{/notifications}">
