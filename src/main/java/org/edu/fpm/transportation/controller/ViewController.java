@@ -179,4 +179,22 @@ public class ViewController {
         model.addAttribute("vehicleId", vehicleId);
         return "support/vehicle-form";
     }
+    
+    /**
+     * Admin dashboard
+     */
+    @GetMapping("/admin/dashboard")
+    @PreAuthorize("hasRole('" + RoleType.Constants.ADMIN + "')")
+    public String adminDashboard() {
+        return "admin/dashboard";
+    }
+    
+    /**
+     * Admin user role management
+     */
+    @GetMapping("/admin/users/roles")
+    @PreAuthorize("hasRole('" + RoleType.Constants.ADMIN + "')")
+    public String adminUserRoles() {
+        return "admin/user-roles";
+    }
 }
