@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Details - Transportation System</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+    <link rel="stylesheet" th:href="@{/css/order-details.css}">
+    <script th:src="@{/js/auth.js}"></script>
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+    <div th:replace="fragments/header :: header"></div>
+    
+    <main class="container">
+        <div class="back-link">
+            <a href="/driver/orders">&larr; Back to Assignments</a>
+        </div>
+        
+        <h1>Order Details</h1>
+        
+        <div id="loading" class="loading">Loading order details...</div>
+        
+        <div id="order-details" class="order-details" style="display: none;">
+            <div class="order-info">
+                <h2>Order #<span id="order-id"></span></h2>
+                <div class="status-badge">
+                    <span id="order-status"></span>
+                </div>
+                <p><strong>Created:</strong> <span id="order-created"></span></p>
+                <p><strong>Customer:</strong> <span id="order-customer"></span></p>
+            </div>
+            
+            <div class="order-sections">
+                <div class="order-section">
+                    <h3>Route Information</h3>
+                    <div id="route-info">
+                        <p><strong>From:</strong> <span id="route-start"></span></p>
+                        <p><strong>To:</strong> <span id="route-end"></span></p>
+                    </div>
+                    <div id="map" style="height: 300px; margin-top: 20px;"></div>
+                </div>
+                
+                <div class="order-section">
+                    <h3>Cargo Information</h3>
+                    <div id="cargo-info">
+                        <p><strong>Type:</strong> <span id="cargo-type"></span></p>
+                        <p><strong>Weight:</strong> <span id="cargo-weight"></span> kg</p>
+                    </div>
+                </div>
+                
+                <div class="order-section">
+                    <h3>Update Status</h3>
+                    <div class="status-update-form">
+                        <div class="form-group">
+                            <label for="status-select">New Status:</label>
+                            <select id="status-select" class="form-control">
+                                <!-- Status options will be loaded dynamically -->
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="status-comment">Comment:</label>
+                            <textarea id="status-comment" class="form-control" rows="3" placeholder="Add a comment about this status update"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="use-current-location" checked> 
+                                Use my current location
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <button id="update-status-btn" class="btn btn-primary">Update Status</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="order-section">
+                    <h3>Location History</h3>
+                    <div id="location-history">
+                        <div id="location-loading">Loading location history...</div>
+                        <div id="no-locations" style="display: none;">No location updates yet.</div>
+                        <div id="location-list" style="display: none;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <div th:replace="fragments/footer :: footer"></div>
+    
+    <script th:inline="javascript">
+        let map;
+        let orderId;
+        let currentPosition = null;
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is authenticated and has DRIVER role
+            if (!isAuthenticated() || !hasRole('DRIVER')) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            // Get order ID from URL
+            const pathParts = window.location.pathname.split('/');
+            orderId = pathParts[pathParts.length - 1];
+            
+            // Load order details
+            loadOrderDetails(orderId);
+            
+            // Load available statuses
+            loadAvailableStatuses();
+            
+            // Get current position if allowed
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        currentPosition = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude
+                        };
+                    },
+                    error => {
+                        console.error("Error getting location:", error);
+                        document.getElementById('use-current-location').checked = false;
+                    }
+                );
+            } else {
+                document.getElementById('use-current-location').checked = false;
+            }
+            
+            // Set up status update button
+            document.getElementById('update-status-btn').addEventListener('click', updateOrderStatus);
+        });
+        
+        function loadOrderDetails(orderId) {
+            fetch(`/api/driver/orders/${orderId}`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load order details');
+                }
+                return response.json();
+            })
+            .then(order => {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('order-details').style.display = 'block';
+                
+                // Populate order details
+                document.getElementById('order-id').textContent = order.id;
+                document.getElementById('order-status').textContent = order.status.statusName;
+                
+                const createdDate = new Date(order.createdAt);
+                document.getElementById('order-created').textContent = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString();
+                
+                document.getElementById('order-customer').textContent = `${order.customer.firstName} ${order.customer.lastName}`;
+                
+                // Load route and cargo info
+                loadRouteInfo(orderId);
+                loadCargoInfo(orderId);
+                
+                // Load location history
+                loadLocationHistory(orderId);
+            })
+            .catch(error => {
+                console.error('Error loading order details:', error);
+                document.getElementById('loading').textContent = 'Error loading order details. Please try again.';
+            });
+        }
+        
+        function loadRouteInfo(orderId) {
+            fetch(`/api/orders/${orderId}/route`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load route information');
+                }
+                return response.json();
+            })
+            .then(route => {
+                document.getElementById('route-start').textContent = route.startLocation;
+                document.getElementById('route-end').textContent = route.endLocation;
+                
+                // Initialize map
+                initMap();
+            })
+            .catch(error => {
+                console.error('Error loading route information:', error);
+                document.getElementById('route-info').innerHTML = '<p>Error loading route information.</p>';
+            });
+        }
+        
+        function loadCargoInfo(orderId) {
+            fetch(`/api/orders/${orderId}/cargo`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load cargo information');
+                }
+                return response.json();
+            })
+            .then(cargo => {
+                document.getElementById('cargo-type').textContent = cargo.type;
+                document.getElementById('cargo-weight').textContent = cargo.weight;
+            })
+            .catch(error => {
+                console.error('Error loading cargo information:', error);
+                document.getElementById('cargo-info').innerHTML = '<p>Error loading cargo information.</p>';
+            });
+        }
+        
+        function loadLocationHistory(orderId) {
+            fetch(`/api/driver/orders/${orderId}/location/history`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load location history');
+                }
+                return response.json();
+            })
+            .then(locations => {
+                document.getElementById('location-loading').style.display = 'none';
+                
+                if (locations.length === 0) {
+                    document.getElementById('no-locations').style.display = 'block';
+                    return;
+                }
+                
+                const locationList = document.getElementById('location-list');
+                locationList.innerHTML = '';
+                locationList.style.display = 'block';
+                
+                locations.forEach(location => {
+                    const timestamp = new Date(location.timestamp);
+                    const formattedTime = timestamp.toLocaleDateString() + ' ' + timestamp.toLocaleTimeString();
+                    
+                    const locationItem = document.createElement('div');
+                    locationItem.className = 'location-item';
+                    locationItem.innerHTML = `
+                        <div class="location-time">${formattedTime}</div>
+                        <div class="location-coords">
+                            <span>Lat: ${location.latitude.toFixed(6)}</span>
+                            <span>Lng: ${location.longitude.toFixed(6)}</span>
+                        </div>
+                        ${location.statusComment ? `<div class="location-comment">${location.statusComment}</div>` : ''}
+                    `;
+                    
+                    locationList.appendChild(locationItem);
+                    
+                    // Add marker to map
+                    if (map) {
+                        L.marker([location.latitude, location.longitude])
+                            .addTo(map)
+                            .bindPopup(`${formattedTime}<br>${location.statusComment || ''}`);
+                    }
+                });
+                
+                // Center map on the latest location
+                if (map && locations.length > 0) {
+                    const latest = locations[0]; // Assuming sorted by timestamp desc
+                    map.setView([latest.latitude, latest.longitude], 13);
+                }
+            })
+            .catch(error => {
+                console.error('Error loading location history:', error);
+                document.getElementById('location-loading').textContent = 'Error loading location history.';
+            });
+        }
+        
+        function loadAvailableStatuses() {
+            fetch('/api/driver/orders/statuses', {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to load available statuses');
+                }
+                return response.json();
+            })
+            .then(statuses => {
+                const statusSelect = document.getElementById('status-select');
+                statusSelect.innerHTML = '';
+                
+                statuses.forEach(status => {
+                    const option = document.createElement('option');
+                    option.value = status.id;
+                    option.textContent = status.statusName;
+                    statusSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading available statuses:', error);
+            });
+        }
+        
+        function updateOrderStatus() {
+            const statusId = document.getElementById('status-select').value;
+            const statusComment = document.getElementById('status-comment').value;
+            const useCurrentLocation = document.getElementById('use-current-location').checked;
+            
+            if (!statusId) {
+                alert('Please select a status');
+                return;
+            }
+            
+            let updateData = {
+                statusId: parseInt(statusId),
+                statusComment: statusComment
+            };
+            
+            if (useCurrentLocation && currentPosition) {
+                updateData.latitude = currentPosition.latitude;
+                updateData.longitude = currentPosition.longitude;
+            }
+            
+            // Disable button during update
+            const updateButton = document.getElementById('update-status-btn');
+            updateButton.disabled = true;
+            updateButton.textContent = 'Updating...';
+            
+            fetch(`/api/driver/orders/${orderId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': 'Bearer ' + getToken(),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to update order status');
+                }
+                return response.json();
+            })
+            .then(updatedOrder => {
+                // Update status display
+                document.getElementById('order-status').textContent = updatedOrder.status.statusName;
+                
+                // Clear comment field
+                document.getElementById('status-comment').value = '';
+                
+                // Reload location history
+                loadLocationHistory(orderId);
+                
+                // Re-enable button
+                updateButton.disabled = false;
+                updateButton.textContent = 'Update Status';
+                
+                alert('Order status updated successfully');
+            })
+            .catch(error => {
+                console.error('Error updating order status:', error);
+                alert('Error updating order status. Please try again.');
+                
+                // Re-enable button
+                updateButton.disabled = false;
+                updateButton.textContent = 'Update Status';
+            });
+        }
+        
+        function initMap() {
+            map = L.map('map').setView([50.4501, 30.5234], 13); // Default view (Kyiv)
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+            
+            // Load latest location
+            fetch(`/api/driver/orders/${orderId}/location`, {
+                headers: {
+                    'Authorization': 'Bearer ' + getToken()
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        return null; // No location yet
+                    }
+                    throw new Error('Failed to load location');
+                }
+                return response.json();
+            })
+            .then(location => {
+                if (location) {
+                    map.setView([location.latitude, location.longitude], 13);
+                    L.marker([location.latitude, location.longitude])
+                        .addTo(map)
+                        .bindPopup('Current location')
+                        .openPopup();
+                }
+            })
+            .catch(error => {
+                console.error('Error loading current location:', error);
+            });
+        }
+    </script>
+</body>
+</html>
