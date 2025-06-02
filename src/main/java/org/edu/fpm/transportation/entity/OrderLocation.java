@@ -30,5 +30,8 @@ public class OrderLocation {
     private Double longitude;
 
     @Column(name = "timestamp", nullable = false)
-    private Instant timestamp = Instant.now();
+    private Instant timestamp;
+    
+    @Column(name = "status_comment")
+    private String statusComment;
 }
