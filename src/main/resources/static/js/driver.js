@@ -2,10 +2,21 @@
  * Driver related JavaScript functions
  */
 
-// Load driver orders
+// Load driver orders for the orders page
 function loadDriverOrders() {
     const ordersContainer = document.getElementById('ordersContainer');
-    if (!ordersContainer) return;
+    if (!ordersContainer) {
+        // If we're not on the orders page, check if we're on the vehicle page
+        const assignmentsLoadingElement = document.getElementById('assignments-loading');
+        const noAssignmentsElement = document.getElementById('no-assignments');
+        const assignmentsListElement = document.getElementById('assignments-list');
+        
+        if (assignmentsLoadingElement && noAssignmentsElement && assignmentsListElement) {
+            // We're on the vehicle page, load assignments
+            loadDriverAssignments();
+        }
+        return;
+    }
     
     // Show loading indicator
     ordersContainer.innerHTML = '<div class="text-center"><p>Loading orders...</p></div>';
@@ -109,6 +120,112 @@ function loadDriverOrders() {
                     <button class="btn btn-sm btn-primary mt-2" onclick="loadDriverOrders()">Try Again</button>
                 </div>
             `;
+        });
+}
+
+// Load driver assignments for the vehicle page
+function loadDriverAssignments() {
+    const assignmentsLoadingElement = document.getElementById('assignments-loading');
+    const noAssignmentsElement = document.getElementById('no-assignments');
+    const assignmentsListElement = document.getElementById('assignments-list');
+    
+    if (!assignmentsLoadingElement || !noAssignmentsElement || !assignmentsListElement) return;
+    
+    // Get token directly
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        assignmentsLoadingElement.style.display = 'none';
+        assignmentsListElement.innerHTML = `
+            <div class="alert alert-danger">
+                Authentication error. Please log in again.
+            </div>
+        `;
+        assignmentsListElement.style.display = 'block';
+        return;
+    }
+    
+    console.log('Loading driver assignments');
+    
+    // Fetch orders from API
+    fetch('/api/driver/orders', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => {
+            console.log('Orders API response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`Failed to load orders: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(orders => {
+            console.log('Received orders data for assignments:', orders);
+            
+            assignmentsLoadingElement.style.display = 'none';
+            
+            // Filter only active orders (not delivered or cancelled)
+            const activeOrders = orders.filter(order => 
+                order.status && 
+                order.status.statusName !== 'DELIVERED' && 
+                order.status.statusName !== 'CANCELLED'
+            );
+            
+            console.log('Active orders:', activeOrders);
+            
+            if (!activeOrders || activeOrders.length === 0) {
+                noAssignmentsElement.style.display = 'block';
+                assignmentsListElement.style.display = 'none';
+                return;
+            }
+            
+            assignmentsListElement.innerHTML = '';
+            assignmentsListElement.style.display = 'block';
+            
+            activeOrders.forEach(order => {
+                const assignmentItem = document.createElement('div');
+                assignmentItem.className = 'assignment-item';
+                
+                // Format date
+                const createdDate = new Date(order.createdAt);
+                const formattedDate = createdDate.toLocaleDateString();
+                
+                // Get customer name safely
+                const customerName = order.customer ? 
+                    `${order.customer.firstName || ''} ${order.customer.lastName || ''}`.trim() : 
+                    'Unknown';
+                
+                assignmentItem.innerHTML = `
+                    <div class="assignment-header">
+                        <span class="assignment-id">Order #${order.id}</span>
+                        <span class="assignment-status">${order.status ? order.status.statusName : 'Unknown'}</span>
+                    </div>
+                    <div class="assignment-details">
+                        <p><strong>Customer:</strong> ${customerName}</p>
+                        <p><strong>Created:</strong> ${formattedDate}</p>
+                        <p><strong>Route:</strong> ${order.startLocation || 'N/A'} → ${order.endLocation || 'N/A'}</p>
+                    </div>
+                    <div class="assignment-actions">
+                        <a href="/driver/orders/${order.id}" class="btn btn-primary">View Details</a>
+                    </div>
+                `;
+                
+                assignmentsListElement.appendChild(assignmentItem);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading assignments:', error);
+            assignmentsLoadingElement.style.display = 'none';
+            assignmentsListElement.innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading assignments: ${error.message}
+                    <br>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="loadDriverAssignments()">Try Again</button>
+                </div>
+            `;
+            assignmentsListElement.style.display = 'block';
         });
 }
 
@@ -272,39 +389,6 @@ function loadCargoInfo(orderId) {
             `;
         });
 }
-
-// Format date
-function formatDate(dateString) {
-    if (!dateString) return 'N/A';
-    const date = new Date(dateString);
-    return date.toLocaleString();
-}
-
-// Initialize driver page
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('Driver page initialized');
-    
-    // Check if user is authenticated
-    if (!localStorage.getItem('jwt_token')) {
-        console.log('User not authenticated, redirecting to login');
-        window.location.href = '/login';
-        return;
-    }
-    
-    // Load driver orders if on orders page
-    if (window.location.pathname === '/driver/orders') {
-        console.log('On orders page, loading driver orders');
-        loadDriverOrders();
-    }
-    
-    // Load order details if on order details page
-    const orderDetailsMatch = window.location.pathname.match(/\/driver\/orders\/(\d+)/);
-    if (orderDetailsMatch) {
-        const orderId = orderDetailsMatch[1];
-        console.log('On order details page, loading order:', orderId);
-        loadOrderDetails(orderId);
-    }
-});
 
 // Load location history
 function loadLocationHistory(orderId) {
@@ -581,6 +665,7 @@ function initMap() {
             console.error('Error loading latest location:', error);
         });
 }
+
 // Load vehicle details
 function loadVehicleDetails() {
     const loadingElement = document.getElementById('loading');
@@ -630,7 +715,17 @@ function loadVehicleDetails() {
             
             // Set vehicle photo if available
             if (vehicle.photoUrl) {
-                document.getElementById('vehicle-photo').src = vehicle.photoUrl;
+                const img = new Image();
+                img.onload = function() {
+                    document.getElementById('vehicle-photo').src = vehicle.photoUrl;
+                };
+                img.onerror = function() {
+                    console.log('Error loading vehicle photo from URL:', vehicle.photoUrl);
+                    document.getElementById('vehicle-photo').src = '/images/default-truck.jpg';
+                };
+                img.src = vehicle.photoUrl;
+            } else {
+                console.log('No photo URL provided, using default truck image');
             }
         })
         .catch(error => {
@@ -645,3 +740,43 @@ function loadVehicleDetails() {
             errorMessageElement.style.display = 'block';
         });
 }
+
+// Format date
+function formatDate(dateString) {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleString();
+}
+
+// Initialize driver page
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Driver page initialized');
+    
+    // Check if user is authenticated
+    if (!localStorage.getItem('jwt_token')) {
+        console.log('User not authenticated, redirecting to login');
+        window.location.href = '/login';
+        return;
+    }
+    
+    // Load driver orders if on orders page
+    if (window.location.pathname === '/driver/orders') {
+        console.log('On orders page, loading driver orders');
+        loadDriverOrders();
+    }
+    
+    // Load order details if on order details page
+    const orderDetailsMatch = window.location.pathname.match(/\/driver\/orders\/(\d+)/);
+    if (orderDetailsMatch) {
+        const orderId = orderDetailsMatch[1];
+        console.log('On order details page, loading order:', orderId);
+        loadOrderDetails(orderId);
+    }
+    
+    // Load vehicle details if on vehicle page
+    if (window.location.pathname === '/driver/vehicle') {
+        console.log('On vehicle page, loading vehicle details');
+        loadVehicleDetails();
+        loadDriverAssignments();
+    }
+});

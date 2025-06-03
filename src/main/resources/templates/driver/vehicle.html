@@ -20,7 +20,7 @@
         <div id="vehicle-details" class="vehicle-details" style="display: none;">
             <div class="vehicle-card">
                 <div class="vehicle-image">
-                    <img id="vehicle-photo" src="/images/default-vehicle.jpg" alt="Vehicle Photo">
+                    <img id="vehicle-photo" src="/images/default-truck.jpg" alt="Vehicle Photo" onerror="this.src='/images/default-truck.jpg'">
                 </div>
                 <div class="vehicle-info">
                     <h2>Vehicle Information</h2>
@@ -58,8 +58,8 @@
                 return;
             }
             
-            loadVehicleDetails();
-            loadDriverOrders();
+            // These functions are now defined in driver.js
+            console.log('Initializing vehicle page');
         });
     </script>
 </body>
