@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 public class PricingConstants {
     
     // Base price per ton per kilometer (in currency units)
-    public static final BigDecimal BASE_PRICE_PER_TON = new BigDecimal("250.00");
+    public static final BigDecimal BASE_PRICE_PER_TON = new BigDecimal("10.00");
     
     // Weight thresholds in tons
     public static final BigDecimal OPTIMAL_WEIGHT_MIN = new BigDecimal("15.0"); // 15 tons
