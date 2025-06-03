@@ -1,9 +1,6 @@
 package org.edu.fpm.transportation.controller;
 
-import org.edu.fpm.transportation.dto.OrderAssignmentDto;
-import org.edu.fpm.transportation.dto.OrderCreateDto;
-import org.edu.fpm.transportation.dto.OrderDto;
-import org.edu.fpm.transportation.dto.OrderStatusUpdateDto;
+import org.edu.fpm.transportation.dto.*;
 import org.edu.fpm.transportation.entity.Cargo;
 import org.edu.fpm.transportation.entity.Order;
 import org.edu.fpm.transportation.entity.OrderLocation;
@@ -91,14 +88,14 @@ public class OrderController {
     }
     
     @GetMapping("/{id}/route")
-    public ResponseEntity<Route> getOrderRoute(@PathVariable Integer id) {
+    public ResponseEntity<RouteDto> getOrderRoute(@PathVariable Integer id) {
         Route route = orderService.getOrderRoute(id);
-        return ResponseEntity.ok(route);
+        return ResponseEntity.ok(RouteDto.fromEntity(route));
     }
 
     @GetMapping("/{id}/cargo")
-    public ResponseEntity<Cargo> getOrderCargo(@PathVariable Integer id) {
+    public ResponseEntity<CargoDto> getOrderCargo(@PathVariable Integer id) {
         Cargo cargo = orderService.getOrderCargo(id);
-        return ResponseEntity.ok(cargo);
+        return ResponseEntity.ok(CargoDto.fromEntity(cargo));
     }
 }
