@@ -1,8 +1,10 @@
 package org.edu.fpm.transportation.controller.driver;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.edu.fpm.transportation.dto.DriverOrderStatusDto;
 import org.edu.fpm.transportation.dto.OrderDto;
+import org.edu.fpm.transportation.dto.OrderLocationDto;
 import org.edu.fpm.transportation.entity.Order;
 import org.edu.fpm.transportation.entity.OrderLocation;
 import org.edu.fpm.transportation.entity.OrderStatus;
@@ -24,6 +26,7 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/driver/orders")
 @RequiredArgsConstructor
+@Slf4j
 public class DriverOrderController {
 
     private final DriverService driverService;
@@ -78,10 +81,11 @@ public class DriverOrderController {
      * Get the latest location of an order
      */
     @GetMapping("/{orderId}/location")
-    public ResponseEntity<OrderLocation> getLatestOrderLocation(
+    public ResponseEntity<OrderLocationDto> getLatestOrderLocation(
             @PathVariable Integer orderId,
             @RequestHeader("Authorization") String authHeader) {
         try {
+            log.info("Getting latest location for order: {}", orderId);
             // Verify the driver has access to this order
             String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
             Integer userIdFromToken = jwtService.getUserIdFromToken(token);
@@ -91,12 +95,47 @@ public class DriverOrderController {
             
             OrderLocation location = orderService.getLatestOrderLocation(orderId);
             if (location != null) {
-                return ResponseEntity.ok(location);
+                return ResponseEntity.ok(OrderLocationDto.fromEntity(location));
             } else {
                 return ResponseEntity.notFound().build();
             }
         } catch (ResourceNotFoundException e) {
             // Let the GlobalExceptionHandler handle this exception
+            log.error("Error getting latest location for order {}: {}", orderId, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting latest location for order {}: {}", orderId, e.getMessage());
+            throw e;
+        }
+    }
+
+    /**
+     * Get location history for an order
+     */
+    @GetMapping("/{orderId}/location/history")
+    public ResponseEntity<List<OrderLocationDto>> getOrderLocationHistory(
+            @PathVariable Integer orderId,
+            @RequestHeader("Authorization") String authHeader) {
+        try {
+            log.info("Getting location history for order: {}", orderId);
+            // Verify the driver has access to this order
+            String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
+            Integer userIdFromToken = jwtService.getUserIdFromToken(token);
+            
+            // This will throw ResourceNotFoundException if order doesn't exist
+            driverService.getDriverOrderById(orderId, userIdFromToken);
+            
+            List<OrderLocation> locations = orderService.getOrderLocationHistory(orderId);
+            List<OrderLocationDto> locationDtos = locations.stream()
+                    .map(OrderLocationDto::fromEntity)
+                    .collect(Collectors.toList());
+            
+            return ResponseEntity.ok(locationDtos);
+        } catch (ResourceNotFoundException e) {
+            log.error("Error getting location history for order {}: {}", orderId, e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            log.error("Unexpected error getting location history for order {}: {}", orderId, e.getMessage(), e);
             throw e;
         }
     }

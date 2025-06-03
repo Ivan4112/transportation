@@ -107,6 +107,9 @@
             const pathParts = window.location.pathname.split('/');
             orderId = pathParts[pathParts.length - 1];
             
+            // Load order details
+            loadOrderDetails(orderId);
+            
             // Load available statuses
             loadAvailableStatuses();
             
