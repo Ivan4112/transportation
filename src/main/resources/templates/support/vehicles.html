@@ -206,11 +206,11 @@
                     const vehicleCard = document.createElement('div');
                     vehicleCard.className = 'vehicle-card';
                     
-                    const photoUrl = vehicle.photoUrl || '/images/default-vehicle.jpg';
+                    const photoUrl = vehicle.photoUrl || '/images/default-truck.jpg';
                     
                     vehicleCard.innerHTML = `
                         <div class="vehicle-image">
-                            <img src="${photoUrl}" alt="Vehicle Photo" onerror="this.src='/images/default-vehicle.jpg'">
+                            <img src="${photoUrl}" alt="Vehicle Photo" onerror="this.src='/images/default-truck.jpg'">
                         </div>
                         <div class="vehicle-info">
                             <h3>${vehicle.licensePlate}</h3>
