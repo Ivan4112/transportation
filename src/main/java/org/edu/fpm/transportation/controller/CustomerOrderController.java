@@ -48,7 +48,7 @@ public class CustomerOrderController {
         return ResponseEntity.ok(OrderDto.fromEntity(order));
     }
 
-    @PostMapping("/create")
+    @PostMapping()
     public ResponseEntity<OrderDto> createOrder(@RequestBody OrderRequestDto orderRequest,
                                              @RequestHeader("Authorization") String authHeader) {
         String token = jwtService.extractTokenFromHeaders(Map.of(HttpHeaders.AUTHORIZATION, authHeader));
