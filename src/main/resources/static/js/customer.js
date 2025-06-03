@@ -10,16 +10,38 @@ function loadCustomerOrders() {
     // Show loading indicator
     ordersContainer.innerHTML = '<div class="text-center"><p>Loading orders...</p></div>';
     
-    // Fetch orders from API
-    fetchWithAuth('/api/customer/orders')
+    // Get token directly
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        ordersContainer.innerHTML = `
+            <div class="alert alert-danger">
+                Authentication error. Please log in again.
+            </div>
+        `;
+        return;
+    }
+    
+    console.log('Fetching orders with token:', token);
+    
+    // Direct fetch with token
+    fetch('/api/customer/orders', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
         .then(response => {
+            console.log('API response status:', response.status);
             if (!response.ok) {
-                throw new Error('Failed to load orders');
+                throw new Error(`Failed to load orders: ${response.status}`);
             }
             return response.json();
         })
         .then(orders => {
-            if (orders.length === 0) {
+            console.log('Received orders data:', orders);
+            
+            if (!orders || orders.length === 0) {
                 ordersContainer.innerHTML = `
                     <div class="alert alert-info">
                         You don't have any orders yet. <a href="/customer/orders/create">Create your first order</a>.
@@ -46,19 +68,20 @@ function loadCustomerOrders() {
             `;
             
             orders.forEach(order => {
+                console.log('Processing order:', order.id);
                 html += `
                     <tr>
                         <td>${order.id}</td>
                         <td>
-                            <span>${order.cargoType}</span><br>
-                            <small>${order.cargoWeight} kg</small>
+                            <span>${order.cargoType || 'N/A'}</span><br>
+                            <small>${order.cargoWeight ? order.cargoWeight + ' kg' : 'N/A'}</small>
                         </td>
                         <td>
-                            <span>${order.startLocation} → ${order.endLocation}</span><br>
-                            <small>${order.distance} km</small>
+                            <span>${order.startLocation || 'N/A'} → ${order.endLocation || 'N/A'}</span><br>
+                            <small>${order.distance ? order.distance + ' km' : 'N/A'}</small>
                         </td>
                         <td>
-                            <span class="status-${order.status.toLowerCase()}">${order.status}</span>
+                            <span class="status-${order.status ? order.status.statusName.toLowerCase() : 'unknown'}">${order.status ? order.status.statusName : 'Unknown'}</span>
                         </td>
                         <td>${formatCurrency(order.price)}</td>
                         <td>${formatDate(order.createdAt)}</td>
@@ -78,9 +101,14 @@ function loadCustomerOrders() {
         })
         .catch(error => {
             console.error('Error:', error);
+            console.error('Error details:', error.message);
             ordersContainer.innerHTML = `
                 <div class="alert alert-danger">
                     Failed to load orders. Please try again later.
+                    <br>
+                    <small>Error details: ${error.message}</small>
+                    <br>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="loadCustomerOrders()">Try Again</button>
                 </div>
             `;
         });
@@ -94,15 +122,35 @@ function loadOrderDetails(orderId) {
     // Show loading indicator
     orderDetailsContainer.innerHTML = '<div class="text-center"><p>Loading order details...</p></div>';
     
+    // Get token directly
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        orderDetailsContainer.innerHTML = `
+            <div class="alert alert-danger">
+                Authentication error. Please log in again.
+            </div>
+        `;
+        return;
+    }
+    
     // Fetch order details from API
-    fetchWithAuth(`/api/customer/orders/${orderId}`)
+    fetch(`/api/customer/orders/${orderId}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
         .then(response => {
+            console.log('API response status:', response.status);
             if (!response.ok) {
-                throw new Error('Failed to load order details');
+                throw new Error(`Failed to load order details: ${response.status}`);
             }
             return response.json();
         })
         .then(order => {
+            console.log('Received order data:', order);
+            
             // Create order details HTML
             let html = `
                 <div class="row" style="display: flex; flex-wrap: wrap; margin: -10px;">
@@ -114,7 +162,7 @@ function loadOrderDetails(orderId) {
                             </div>
                             <div class="card-body">
                                 <div style="text-align: center; padding: 20px 0;">
-                                    <span class="status-${order.status.toLowerCase()}" style="font-size: 1.5rem; padding: 10px 20px;">${order.status}</span>
+                                    <span class="status-${order.status ? order.status.statusName.toLowerCase() : 'unknown'}" style="font-size: 1.5rem; padding: 10px 20px;">${order.status ? order.status.statusName : 'Unknown'}</span>
                                 </div>
                                 <div style="margin-top: 15px;">
                                     <p><strong>Created:</strong> <span>${formatDate(order.createdAt)}</span></p>
@@ -131,8 +179,8 @@ function loadOrderDetails(orderId) {
                                 <h3>Cargo Details</h3>
                             </div>
                             <div class="card-body">
-                                <p><strong>Type:</strong> <span>${order.cargoType}</span></p>
-                                <p><strong>Weight:</strong> <span>${order.cargoWeight} kg</span></p>
+                                <p><strong>Type:</strong> <span>${order.cargoType || 'N/A'}</span></p>
+                                <p><strong>Weight:</strong> <span>${order.cargoWeight ? order.cargoWeight + ' kg' : 'N/A'}</span></p>
                                 <p><strong>Price:</strong> <span>${formatCurrency(order.price)}</span></p>
                             </div>
                         </div>
@@ -145,9 +193,9 @@ function loadOrderDetails(orderId) {
                                 <h3>Route Information</h3>
                             </div>
                             <div class="card-body">
-                                <p><strong>From:</strong> <span>${order.startLocation}</span></p>
-                                <p><strong>To:</strong> <span>${order.endLocation}</span></p>
-                                <p><strong>Distance:</strong> <span>${order.distance} km</span></p>
+                                <p><strong>From:</strong> <span>${order.startLocation || 'N/A'}</span></p>
+                                <p><strong>To:</strong> <span>${order.endLocation || 'N/A'}</span></p>
+                                <p><strong>Distance:</strong> <span>${order.distance ? order.distance + ' km' : 'N/A'}</span></p>
                             </div>
                         </div>
                     </div>
@@ -174,7 +222,7 @@ function loadOrderDetails(orderId) {
             `;
             
             // Add tracking map if order is in transit
-            if (order.status === 'IN_TRANSIT') {
+            if (order.status && order.status.statusName === 'IN_TRANSIT') {
                 html += `
                     <div class="card mt-3">
                         <div class="card-header">
@@ -190,7 +238,7 @@ function loadOrderDetails(orderId) {
             orderDetailsContainer.innerHTML = html;
             
             // Initialize map if order is in transit
-            if (order.status === 'IN_TRANSIT') {
+            if (order.status && order.status.statusName === 'IN_TRANSIT') {
                 initMap(orderId);
             }
         })
@@ -199,6 +247,10 @@ function loadOrderDetails(orderId) {
             orderDetailsContainer.innerHTML = `
                 <div class="alert alert-danger">
                     Failed to load order details. Please try again later.
+                    <br>
+                    <small>Error details: ${error.message}</small>
+                    <br>
+                    <button class="btn btn-sm btn-primary mt-2" onclick="loadOrderDetails(${orderId})">Try Again</button>
                 </div>
             `;
         });
@@ -231,10 +283,14 @@ function calculateOrderPrice() {
     calculateButton.disabled = true;
     calculateButton.textContent = 'Calculating...';
     
+    // Get token directly
+    const token = localStorage.getItem('jwt_token');
+    
     // Send API request
-    fetchWithAuth('/api/customer/orders/calculate-price', {
+    fetch('/api/customer/orders/calculate-price', {
         method: 'POST',
         headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
@@ -299,10 +355,14 @@ function createOrder(event) {
     submitButton.disabled = true;
     submitButton.textContent = 'Creating Order...';
     
+    // Get token directly
+    const token = localStorage.getItem('jwt_token');
+    
     // Send API request
-    fetchWithAuth('/api/customer/orders', {
+    fetch('/api/customer/orders/create', {
         method: 'POST',
         headers: {
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(requestBody)
@@ -341,33 +401,39 @@ function initMap(orderId) {
 
 // Update order location on map
 function updateLocation(orderId) {
-    fetchWithAuth(`/api/tracking/orders/${orderId}/location`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to fetch location');
-            }
-            return response.json();
-        })
-        .then(data => {
-            // Update map with new location
-            console.log("Location updated:", data);
-            // In a real application, you would update the map marker position
-        })
-        .catch(error => {
-            console.error('Error fetching location:', error);
-        });
+    const token = localStorage.getItem('jwt_token');
+    
+    fetch(`/api/tracking/orders/${orderId}/location`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Failed to fetch location');
+        }
+        return response.json();
+    })
+    .then(data => {
+        // Update map with new location
+        console.log("Location updated:", data);
+        // In a real application, you would update the map marker position
+    })
+    .catch(error => {
+        console.error('Error fetching location:', error);
+    });
 }
 
 // Format date
 function formatDate(dateString) {
-    if (!dateString) return '';
+    if (!dateString) return 'N/A';
     const date = new Date(dateString);
     return date.toLocaleString();
 }
 
 // Format currency
 function formatCurrency(amount) {
-    if (!amount) return '';
+    if (!amount && amount !== 0) return 'N/A';
     return new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(amount);
 }
 
@@ -387,14 +453,18 @@ function selectCargoType(element) {
 
 // Initialize customer page
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('Customer page initialized');
+    
     // Check if user is authenticated
-    if (!isAuthenticated()) {
+    if (!localStorage.getItem('jwt_token')) {
+        console.log('User not authenticated, redirecting to login');
         window.location.href = '/login';
         return;
     }
     
     // Load customer orders if on orders page
     if (window.location.pathname === '/customer/orders') {
+        console.log('On orders page, loading customer orders');
         loadCustomerOrders();
     }
     
@@ -402,11 +472,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const orderDetailsMatch = window.location.pathname.match(/\/customer\/orders\/(\d+)/);
     if (orderDetailsMatch) {
         const orderId = orderDetailsMatch[1];
+        console.log('On order details page, loading order:', orderId);
         loadOrderDetails(orderId);
     }
     
     // Initialize order form if on create order page
     if (window.location.pathname === '/customer/orders/create') {
+        console.log('On create order page, initializing form');
+        
         // Set default cargo type
         const defaultCargoType = document.querySelector('.cargo-type-option[data-value="GRAIN"]');
         if (defaultCargoType) {

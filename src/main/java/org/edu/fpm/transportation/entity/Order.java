@@ -9,6 +9,7 @@ import org.hibernate.annotations.OnDeleteAction;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -46,4 +47,10 @@ public class Order {
     @ColumnDefault("CURRENT_TIMESTAMP")
     @Column(name = "created_at")
     private Instant createdAt;
+    
+    @OneToMany(mappedBy = "order", fetch = FetchType.EAGER)
+    private Set<Route> route;
+    
+    @OneToMany(mappedBy = "order", fetch = FetchType.EAGER)
+    private Set<Cargo> cargo;
 }

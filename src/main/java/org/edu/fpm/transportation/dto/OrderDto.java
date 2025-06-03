@@ -4,10 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.edu.fpm.transportation.entity.Order;
-import org.edu.fpm.transportation.entity.OrderStatus;
-import org.edu.fpm.transportation.entity.User;
-import org.edu.fpm.transportation.entity.Vehicle;
+import org.edu.fpm.transportation.entity.*;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -23,6 +20,16 @@ public class OrderDto {
     private OrderStatusDto status;
     private BigDecimal price;
     
+    // Additional fields needed for the frontend
+    private String cargoType;
+    private Double cargoWeight;
+    private String startLocation;
+    private String endLocation;
+    private BigDecimal distance;
+    private String driverName;
+    private String vehicleLicensePlate;
+    private Instant estimatedDeliveryTime;
+    
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
     private Instant createdAt;
     
@@ -33,15 +40,33 @@ public class OrderDto {
         
         if (order.getDriver() != null) {
             dto.setDriver(UserDto.fromEntity(order.getDriver()));
+            dto.setDriverName(order.getDriver().getFirstName() + " " + order.getDriver().getLastName());
         }
         
         if (order.getVehicle() != null) {
             dto.setVehicle(VehicleDto.fromEntity(order.getVehicle()));
+            dto.setVehicleLicensePlate(order.getVehicle().getLicensePlate());
         }
         
         dto.setStatus(OrderStatusDto.fromEntity(order.getStatus()));
         dto.setPrice(order.getPrice());
         dto.setCreatedAt(order.getCreatedAt());
+        
+        // Fetch cargo details
+        if (order.getCargo() != null && !order.getCargo().isEmpty()) {
+            Cargo cargo = order.getCargo().iterator().next();
+            dto.setCargoType(cargo.getType());
+            dto.setCargoWeight(cargo.getWeight());
+        }
+        
+        // Fetch route details
+        if (order.getRoute() != null && !order.getRoute().isEmpty()) {
+            Route route = order.getRoute().iterator().next();
+            dto.setStartLocation(route.getStartLocation());
+            dto.setEndLocation(route.getEndLocation());
+            dto.setDistance(route.getDistance());
+            dto.setEstimatedDeliveryTime(route.getEstimatedTime());
+        }
         
         return dto;
     }
