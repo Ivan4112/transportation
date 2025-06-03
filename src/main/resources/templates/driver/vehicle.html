@@ -7,9 +7,10 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <link rel="stylesheet" th:href="@{/css/vehicle.css}">
     <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/driver.js}"></script>
 </head>
 <body>
-    <div th:replace="fragments/header :: header"></div>
+    <div th:replace="~{fragments/header :: header}"></div>
     
     <main class="container">
         <h1>My Vehicle</h1>
@@ -47,7 +48,7 @@
         </div>
     </main>
     
-    <div th:replace="fragments/footer :: footer"></div>
+    <div th:replace="~{fragments/footer :: footer}"></div>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -60,108 +61,6 @@
             loadVehicleDetails();
             loadDriverOrders();
         });
-        
-        function loadVehicleDetails() {
-            fetch('/api/driver/vehicle', {
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        throw new Error('No vehicle assigned');
-                    }
-                    throw new Error('Failed to load vehicle details');
-                }
-                return response.json();
-            })
-            .then(vehicle => {
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('vehicle-details').style.display = 'block';
-                
-                // Populate vehicle details
-                document.getElementById('license-plate').textContent = vehicle.licensePlate;
-                document.getElementById('capacity').textContent = vehicle.capacity + ' kg';
-                
-                // Set vehicle photo if available
-                if (vehicle.photoUrl) {
-                    document.getElementById('vehicle-photo').src = vehicle.photoUrl;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading vehicle details:', error);
-                document.getElementById('loading').style.display = 'none';
-                
-                if (error.message === 'No vehicle assigned') {
-                    document.getElementById('error-message').style.display = 'block';
-                } else {
-                    document.getElementById('error-message').textContent = 'Error loading vehicle details. Please try again.';
-                    document.getElementById('error-message').style.display = 'block';
-                }
-            });
-        }
-        
-        function loadDriverOrders() {
-            fetch('/api/driver/orders', {
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load orders');
-                }
-                return response.json();
-            })
-            .then(orders => {
-                document.getElementById('assignments-loading').style.display = 'none';
-                
-                // Filter only active orders (not delivered or cancelled)
-                const activeOrders = orders.filter(order => 
-                    order.status.statusName !== 'DELIVERED' && 
-                    order.status.statusName !== 'CANCELLED'
-                );
-                
-                if (activeOrders.length === 0) {
-                    document.getElementById('no-assignments').style.display = 'block';
-                    return;
-                }
-                
-                const assignmentsList = document.getElementById('assignments-list');
-                assignmentsList.innerHTML = '';
-                assignmentsList.style.display = 'block';
-                
-                activeOrders.forEach(order => {
-                    const assignmentItem = document.createElement('div');
-                    assignmentItem.className = 'assignment-item';
-                    
-                    // Format date
-                    const createdDate = new Date(order.createdAt);
-                    const formattedDate = createdDate.toLocaleDateString();
-                    
-                    assignmentItem.innerHTML = `
-                        <div class="assignment-header">
-                            <span class="assignment-id">Order #${order.id}</span>
-                            <span class="assignment-status">${order.status.statusName}</span>
-                        </div>
-                        <div class="assignment-details">
-                            <p><strong>Customer:</strong> ${order.customer.firstName} ${order.customer.lastName}</p>
-                            <p><strong>Created:</strong> ${formattedDate}</p>
-                        </div>
-                        <div class="assignment-actions">
-                            <a href="/driver/orders/${order.id}" class="btn btn-primary">View Details</a>
-                        </div>
-                    `;
-                    
-                    assignmentsList.appendChild(assignmentItem);
-                });
-            })
-            .catch(error => {
-                console.error('Error loading assignments:', error);
-                document.getElementById('assignments-loading').textContent = 'Error loading assignments.';
-            });
-        }
     </script>
 </body>
 </html>

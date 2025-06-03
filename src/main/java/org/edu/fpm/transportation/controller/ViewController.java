@@ -125,6 +125,15 @@ public class ViewController {
     }
     
     /**
+     * Driver vehicle page
+     */
+    @GetMapping("/driver/vehicle")
+    @PreAuthorize("hasRole('" + RoleType.Constants.DRIVER + "')")
+    public String driverVehicle() {
+        return "driver/vehicle";
+    }
+    
+    /**
      * Support agent dashboard
      */
     @GetMapping("/support/dashboard")

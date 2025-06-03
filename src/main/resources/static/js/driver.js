@@ -581,3 +581,67 @@ function initMap() {
             console.error('Error loading latest location:', error);
         });
 }
+// Load vehicle details
+function loadVehicleDetails() {
+    const loadingElement = document.getElementById('loading');
+    const vehicleDetailsElement = document.getElementById('vehicle-details');
+    const errorMessageElement = document.getElementById('error-message');
+    
+    if (!loadingElement || !vehicleDetailsElement || !errorMessageElement) return;
+    
+    // Get token directly
+    const token = localStorage.getItem('jwt_token');
+    if (!token) {
+        loadingElement.style.display = 'none';
+        errorMessageElement.textContent = 'Authentication error. Please log in again.';
+        errorMessageElement.style.display = 'block';
+        return;
+    }
+    
+    console.log('Loading vehicle details');
+    
+    // Fetch vehicle details from API
+    fetch('/api/driver/vehicle', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        }
+    })
+        .then(response => {
+            console.log('Vehicle API response status:', response.status);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('No vehicle assigned');
+                }
+                throw new Error(`Failed to load vehicle details: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(vehicle => {
+            console.log('Received vehicle data:', vehicle);
+            
+            loadingElement.style.display = 'none';
+            vehicleDetailsElement.style.display = 'block';
+            
+            // Populate vehicle details
+            document.getElementById('license-plate').textContent = vehicle.licensePlate || 'N/A';
+            document.getElementById('capacity').textContent = vehicle.capacity ? vehicle.capacity + ' kg' : 'N/A';
+            
+            // Set vehicle photo if available
+            if (vehicle.photoUrl) {
+                document.getElementById('vehicle-photo').src = vehicle.photoUrl;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading vehicle details:', error);
+            loadingElement.style.display = 'none';
+            
+            if (error.message === 'No vehicle assigned') {
+                errorMessageElement.textContent = 'No vehicle is currently assigned to you. Please contact your manager.';
+            } else {
+                errorMessageElement.textContent = `Error loading vehicle details: ${error.message}. Please try again.`;
+            }
+            errorMessageElement.style.display = 'block';
+        });
+}
