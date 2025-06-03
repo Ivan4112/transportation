@@ -486,14 +486,17 @@
             .then(vehicles => {
                 console.log('Vehicles loaded:', vehicles);
                 // Group vehicles by driver
+                driverVehicles = {}; // Reset the object
                 vehicles.forEach(vehicle => {
                     if (vehicle.driver && vehicle.driver.id) {
-                        if (!driverVehicles[vehicle.driver.id]) {
-                            driverVehicles[vehicle.driver.id] = [];
+                        const driverId = vehicle.driver.id.toString();
+                        if (!driverVehicles[driverId]) {
+                            driverVehicles[driverId] = [];
                         }
-                        driverVehicles[vehicle.driver.id].push(vehicle);
+                        driverVehicles[driverId].push(vehicle);
                     }
                 });
+                console.log('Driver vehicles mapping:', driverVehicles);
             })
             .catch(error => {
                 console.error('Error loading vehicles:', error);
@@ -518,7 +521,12 @@
             vehicleSelect.disabled = false;
             
             // Add vehicles for selected driver
+            console.log('Selected driver ID:', driverId);
+            console.log('Available driver vehicles:', driverVehicles);
+            
             const vehicles = driverVehicles[driverId] || [];
+            console.log('Vehicles for selected driver:', vehicles);
+            
             if (vehicles.length === 0) {
                 const option = document.createElement('option');
                 option.disabled = true;

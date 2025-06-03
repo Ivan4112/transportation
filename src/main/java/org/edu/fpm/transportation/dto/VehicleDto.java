@@ -3,6 +3,7 @@ package org.edu.fpm.transportation.dto;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.edu.fpm.transportation.entity.User;
 import org.edu.fpm.transportation.entity.Vehicle;
 
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ public class VehicleDto {
     private String licensePlate;
     private BigDecimal capacity;
     private String photoUrl;
+    private UserDto driver;
     
     public static VehicleDto fromEntity(Vehicle vehicle) {
         if (vehicle == null) {
@@ -26,6 +28,11 @@ public class VehicleDto {
         dto.setLicensePlate(vehicle.getLicensePlate());
         dto.setCapacity(vehicle.getCapacity());
         dto.setPhotoUrl(vehicle.getPhotoUrl());
+        
+        // Include driver information if available
+        if (vehicle.getDriver() != null) {
+            dto.setDriver(UserDto.fromEntity(vehicle.getDriver()));
+        }
         
         return dto;
     }
