@@ -7,6 +7,7 @@
     <link rel="stylesheet" th:href="@{/css/styles.css}">
     <link rel="stylesheet" th:href="@{/css/order-details.css}">
     <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/driver.js}"></script>
     <!-- Leaflet for maps -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
@@ -105,9 +106,6 @@
             // Get order ID from URL
             const pathParts = window.location.pathname.split('/');
             orderId = pathParts[pathParts.length - 1];
-            
-            // Load order details
-            loadOrderDetails(orderId);
             
             // Load available statuses
             loadAvailableStatuses();

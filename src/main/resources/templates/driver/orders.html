@@ -5,102 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Assignments - Transportation System</title>
     <link rel="stylesheet" th:href="@{/css/styles.css}">
-    <link rel="stylesheet" th:href="@{/css/orders.css}">
-    <script th:src="@{/js/auth.js}"></script>
 </head>
 <body>
     <div th:replace="fragments/header :: header"></div>
     
-    <main class="container">
+    <div class="container">
         <h1>My Assignments</h1>
         
-        <div class="orders-container">
-            <div class="orders-list">
-                <div id="loading" class="loading">Loading assignments...</div>
-                <div id="no-orders" class="no-orders" style="display: none;">You have no assigned orders.</div>
-                <div id="orders-table-container" style="display: none;">
-                    <table class="orders-table">
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Customer</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orders-table-body">
-                            <!-- Orders will be populated here -->
-                        </tbody>
-                    </table>
+        <div class="card mb-3">
+            <div class="card-header">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;">Current Assignments</h3>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="ordersContainer">
+                    <!-- Orders will be loaded here via JavaScript -->
+                    <div class="text-center">
+                        <p>Loading assignments...</p>
+                    </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
     
     <div th:replace="fragments/footer :: footer"></div>
     
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is authenticated and has DRIVER role
-            if (!isAuthenticated() || !hasRole('DRIVER')) {
-                window.location.href = '/login';
-                return;
-            }
-            
-            loadDriverOrders();
-        });
-        
-        function loadDriverOrders() {
-            fetch('/api/driver/orders', {
-                headers: {
-                    'Authorization': 'Bearer ' + getToken()
-                }
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load orders');
-                }
-                return response.json();
-            })
-            .then(orders => {
-                document.getElementById('loading').style.display = 'none';
-                
-                if (orders.length === 0) {
-                    document.getElementById('no-orders').style.display = 'block';
-                    return;
-                }
-                
-                const tableBody = document.getElementById('orders-table-body');
-                tableBody.innerHTML = '';
-                
-                orders.forEach(order => {
-                    const row = document.createElement('tr');
-                    
-                    // Format date
-                    const createdDate = new Date(order.createdAt);
-                    const formattedDate = createdDate.toLocaleDateString() + ' ' + createdDate.toLocaleTimeString();
-                    
-                    row.innerHTML = `
-                        <td>${order.id}</td>
-                        <td>${order.customer.firstName} ${order.customer.lastName}</td>
-                        <td>${order.status.statusName}</td>
-                        <td>${formattedDate}</td>
-                        <td>
-                            <a href="/driver/orders/${order.id}" class="btn btn-primary">View Details</a>
-                        </td>
-                    `;
-                    
-                    tableBody.appendChild(row);
-                });
-                
-                document.getElementById('orders-table-container').style.display = 'block';
-            })
-            .catch(error => {
-                console.error('Error loading orders:', error);
-                document.getElementById('loading').textContent = 'Error loading orders. Please try again.';
-            });
-        }
-    </script>
+    <script th:src="@{/js/auth.js}"></script>
+    <script th:src="@{/js/driver.js}"></script>
 </body>
 </html>
